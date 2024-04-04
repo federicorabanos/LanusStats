@@ -1,6 +1,22 @@
 from .exceptions import *
 
 def get_possible_leagues(league, season, page):
+    """Dictionary with all the possible pages, leagues and season for the scraper.
+    Also contains some exception to prevent errors such as a league or page that is not a part of the scraper.
+
+    Args:
+        league (str): League to scrape
+        season (str): Season to scrape
+        page (str): Page to scrape
+
+    Raises:
+        InvalidStrType: If a parameter is not a string
+        InvalidLeagueException: If a league is not inside all the leagues possibles
+        InvalidSeasonException: If a season is not inside all the seasons possibles
+
+    Returns:
+        dict: dictionary with the possible leagues
+    """
     possible_leagues = {
         'Fbref': {
             'Copa de la Liga': {
@@ -407,6 +423,16 @@ def get_possible_leagues(league, season, page):
     return possible_leagues
 
 def get_possible_leagues_for_page(league, season, page):
+    """Get possible leagues for a particular page
+
+    Args:
+        league (str): League to scrape
+        season (str): Season to scrape
+        page (str): Page to scrape
+
+    Returns:
+        dict: leagues that are possible for that page.
+    """
     leagues = get_possible_leagues(league, season, page)[page]
     return leagues
     
@@ -419,13 +445,35 @@ def invalid_type_str_exception(params):
         raise InvalidStrType(params)
     
 def get_available_pages():
+    """Get available pages inside the scraper functions of this repo
+
+    Returns:
+        list: List of possible leagues to scrape.
+    """
     dict_possible = get_possible_leagues('Argentina Copa de la Liga', '2023', 'Fotmob')
     return dict_possible.keys()
 
 def get_available_leagues(page):
+    """Get available leagues inside a page (passed as a parameter) for the scraper functions of that page class.
+
+    Args:
+        page (str): Page inside the array of get_available_pagues()
+
+    Returns:
+        list: List of possible leagues to scrape in this page.
+    """
     available_leagues = list(get_possible_leagues('Argentina Copa de la Liga', '2023', 'Fotmob')[page].keys())
     return available_leagues
 
 def get_available_season_for_leagues(page, league):
+    """Get avaiable seasons configured inside of the functions get_possible_leagues as well as all the data for that page and league.
+
+    Args:
+        page (str): Page inside the array of get_available_pagues()
+        league (str): League inside the array of get_available_leagues(page)
+
+    Returns:
+        dict: League data with the seasons inside
+    """
     league_data = get_possible_leagues('Argentina Copa de la Liga', '2023', 'Fotmob')[page][league]
     return league_data
