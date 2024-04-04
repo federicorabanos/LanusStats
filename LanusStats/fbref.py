@@ -91,12 +91,30 @@ class Fbref:
               data.to_csv(f'{league} - {stat} - {today}.csv')
         return data
 
-    def get_vs_and_teams_season_stats(self, stat, league, save_csv=False, change_columns_names=False, add_page_name=False):
+    def get_vs_and_teams_season_stats(self, stat, league, season=None, save_excel=False, change_columns_names=False, add_page_name=False):
+        """Get For and VS Stats for a team in a season. The two tables show in any stat for any team in a league.
 
-        df = self.get_teams_season_stats(stat, league, save_csv, change_columns_names, add_page_name)
-        df_vs = self.get_teams_season_stats(stat, league, save_csv, True, change_columns_names, add_page_name)
+        Args:
+            stat (str): Stat available for that league in Fbref
+            league (str): League available in the scraper (check get_leagues())
+            season (str, optional): String showing the season for the data to be extracted. Defaults to None.
+            save_excel (bool, optional): If true it save an excel file. Defaults to False.
+            change_columns_names (bool, optional): If you would like to change the columns names. Defaults to False.
+            add_page_name (bool, optional): It add the stat name to the columns. Defaults to False.
 
-        """Usar funcions de ExcelWriter para generar un xlsx que cada pagina sea un df"""
+        Returns:
+            df: DataFrame with the stat/stats for that team
+            df_vs: DataFrame with the stat/stats against that team
+        """
+        df = self.get_teams_season_stats(stat, league, season, False, False, change_columns_names, add_page_name)
+        df_vs = self.get_teams_season_stats(stat, league, season, False, True, change_columns_names, add_page_name)
+
+        if save_excel:
+            path = f'{league} - {stat} vs stats teams.xlsx'
+            writer = pd.ExcelWriter(path, engine='xlsxwriter')
+            df.to_excel(writer, sheet_name='Stats')
+            df_vs.to_excel(writer, sheet_name='VS Stats')
+            writer.close()
 
         return df, df_vs
     
