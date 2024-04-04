@@ -12,7 +12,7 @@ jobs:
       name: testpypi
       url: https://testpypi.org/p/LanusStats
     permissions:
-      id-token: secrets.TEST_PYPI_TOKEN
+      id-token: ${{ secrets.TEST_PYPI_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
