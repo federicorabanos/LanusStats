@@ -55,6 +55,7 @@ class Fbref:
     
     def get_teams_season_stats(self, stat, league, season=None, save_csv=False, stats_vs=False, change_columns_names=False, add_page_name=False):
         
+        print("Starting to scrape teams data from Fbref...")
         possible_stats_exception(self.possible_stats, stat)     
         leagues = get_possible_leagues_for_page(league, season, 'Fbref')
         
@@ -153,11 +154,14 @@ class Fbref:
             league (_type_): _description_
             save_csv (bool, optional): _description_. Defaults to False.
         """
+        
+        print("Starting to scrape player data from Fbref...")
         possible_stats_exception(self.possible_stats, stat)
         
         leagues = get_possible_leagues_for_page(league, season, 'Fbref')
         
         today = datetime.now().strftime('%Y-%m-%d')
+        
         if league == 'Big 5 European Leagues':
             path = f'https://fbref.com/en/comps/{leagues[league]["id"]}/{stat}/players/{leagues[league]["slug"]}-Stats'
         elif season != None:
