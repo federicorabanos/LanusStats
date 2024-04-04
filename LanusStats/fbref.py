@@ -54,6 +54,20 @@ class Fbref:
             raise PlayerDoesntHaveInfo('path')
     
     def get_teams_season_stats(self, stat, league, season=None, save_csv=False, stats_vs=False, change_columns_names=False, add_page_name=False):
+        """Gets you a table of the stats for the teams in a certain league.
+
+        Args:
+            stat (str): Stat available for that league in Fbref
+            league (str): League available in the scraper (check get_leagues())
+            season (str, optional): String showing the season for the data to be extracted. Defaults to None.
+            save_excel (bool, optional): If true it save an excel file. Defaults to False.
+            stats_vs (bool, optional): If true it gives you the VS stats of that table. Defaults to False.
+            change_columns_names (bool, optional): If you would like to change the columns names. Defaults to False.
+            add_page_name (bool, optional): It add the stat name to the columns. Defaults to False.
+
+        Returns:
+            data: DataFrame with the data of the stats of the teams.
+        """
         
         print("Starting to scrape teams data from Fbref...")
         possible_stats_exception(self.possible_stats, stat)     
@@ -147,12 +161,17 @@ class Fbref:
             return cols
          
     def get_player_season_stats(self, stat, league, season=None, save_csv=False, add_page_name=False):
-        """_summary_
+        """Get players season stats for a particular stat.
 
         Args:
-            stat (_type_): _description_
-            league (_type_): _description_
-            save_csv (bool, optional): _description_. Defaults to False.
+            stat (str): stat possible (is a list)
+            league (str): Possible leagues in get_available_leagues("Fbref")
+            season (str, optional): Possible season in get_available_season_for_leagues("Fbref", league). Defaults to None (that gets you the most recent season)
+            save_csv (bool, optional): If true, it saves the tables as a csv. Defaults to False.
+            add_page_name (bool, optional): If true it adds the stat name to all the columns. Defaults to False
+            
+        Returns:
+            df_data: DataFrame with the data for that particular stat selected as a param
         """
         
         print("Starting to scrape player data from Fbref...")
@@ -221,6 +240,16 @@ class Fbref:
         return df_data
 
     def get_all_player_season_stats(self, league, save_csv=False):
+        """Gets a table of ALL the stats in a players page.
+
+        Args:
+            league (str): Possible leagues in get_available_leagues("Fbref")
+            save_csv (bool, optional): If true, it saves the tables as a csv. Defaults to False.
+
+        Returns:
+            data: DataFrame with all the stats of players
+            gk_data: DataFrame with all the stats relevant to goalkeepers
+        """
         
         today = datetime.now().strftime('%Y-%m-%d')
         data = pd.DataFrame()
@@ -266,18 +295,38 @@ class Fbref:
         return slice_colors, text_colors
     
     def get_player_percentiles(self, path):
+        """Gets you a table with the stats and percentiles of a certain player, if they have them.
+
+        Args:
+            path (str): URL to a player page in Fbref. Example: https://fbref.com/en/players/90a0bb3b/Victor-Malcorra
+
+        Returns:
+            player_df: DataFrame with the stats and values of the percentiles.
+        """
         self.player_info_exception(path)
         player_df = pd.read_html(path)[0]
         time.sleep(3)
         return player_df
 
     def plot_player_percentiles(self, path, image=None, chart_stats=None, save_image=False, name_extra='', credit_extra=''):
+        """Does a pizza plot with percentiles (eg: https://mplsoccer.readthedocs.io/en/latest/gallery/pizza_plots/plot_pizza_dark_theme.html#sphx-glr-gallery-pizza-plots-plot-pizza-dark-theme-py)
+        for a specific player, if they have their percentiles in their fbref page.
+
+        Args:
+            path (str): URL to a player page in Fbref. Example: https://fbref.com/en/players/90a0bb3b/Victor-Malcorra
+            image (str, optional): Path to an image so it can be at the center of the plot. Defaults to None. Recommended to use this: https://crop-circle.imageonline.co/
+            chart_stats (list, optional): Adds rectangles above the image to indicate sections of the plot. Defaults to None. Use a list.
+            save_image (bool, optional): Saves a png of the plot. Defaults to False.
+            name_extra (str, optional): Something to add to the title. Defaults to ''.
+            credit_extra (str, optional): Something to add to the credits. Defaults to ''.
+        """
+        
         #Define player dataframe and also colors of the plot
         player_df = self.get_player_percentiles(path=path)
         
         slice_colors, text_colors = self.get_slice_text_colors(player_df)
 
-        #Define strings of parameters
+        #Define strings of parameters and shortens some that are long. You can add more.
         params = list(player_df.iloc[:, 0].dropna())
         params_short = {
             'npxG: Goles esperados (xG) sin contar penaltis': 'npxG',
@@ -301,23 +350,23 @@ class Fbref:
 
         #Define PyPizza class and plot it
         baker = PyPizza(
-            params=plot_params,                  # list of parameters
-            background_color="#222222",     # background color
-            straight_line_color="#000000",  # color for straight lines
-            straight_line_lw=1,             # linewidth for straight lines
-            last_circle_color="#000000",    # color for last line
-            last_circle_lw=1,               # linewidth of last circle
-            other_circle_lw=0,              # linewidth for other circles
-            inner_circle_size=20            # size of inner circle
+            params=plot_params,                  
+            background_color="#222222",     
+            straight_line_color="#000000",  
+            straight_line_lw=1,             
+            last_circle_color="#000000",    
+            last_circle_lw=1,               
+            other_circle_lw=0,              
+            inner_circle_size=20            
         )
 
         fig, ax = baker.make_pizza(
-            values,                          # list of values
-            figsize=(8, 8.5),                # adjust the figsize according to your need
-            color_blank_space="same",        # use the same color to fill blank space
-            slice_colors=slice_colors,       # color for individual slices
-            value_colors=text_colors,        # color for the value-text
-            value_bck_colors=slice_colors,   # color for the blank spaces
+            values,                          
+            figsize=(8, 8.5),                
+            color_blank_space="same",        
+            slice_colors=slice_colors,        
+            value_colors=text_colors,         
+            value_bck_colors=slice_colors,    
             blank_alpha=0.4,
             kwargs_slices=dict(
                 edgecolor="#000000", zorder=2, linewidth=1
@@ -339,7 +388,7 @@ class Fbref:
         #Define all the text in the plot
         name = path.split('/')[-1].replace('-', ' ')
         
-        #Credits
+        #Credits. Don't delete them. I will find you.
         if path.split('/')[3] == 'es':
             CREDIT_1 = f"Data: Fbref | Código: LanusStats | Inspirado por: MPLSoccer {credit_extra}"
             CREDIT_2 = "A mayor valor de la barra, signfica que está entre los números más altos de la categoría"
@@ -398,6 +447,14 @@ class Fbref:
         return data
     
     def get_player_similarities(self, path):
+        """Gets you a table of player similarities.
+
+        Args:
+            path (str): URL to a player page in Fbref. Example: https://fbref.com/en/players/90a0bb3b/Victor-Malcorra
+
+        Returns:
+            data: DataFrame with the names of the players similar.
+        """
         self.player_info_exception(path)
         data = pd.read_html(path)[1]
         time.sleep(3)
@@ -416,5 +473,13 @@ class Fbref:
         return local_df, visit_df
 
     def get_tournament_table(self, path):
+        """Gets you the table of the league.
+
+        Args:
+            path (str): URL of the page of the league. Example: https://fbref.com/en/comps/21/Primera-Division-Stats
+
+        Returns:
+            data: DataFrame with the table.
+        """
         data = self.get_all_dfs(path)[0]
         return data
