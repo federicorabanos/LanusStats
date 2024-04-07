@@ -16,7 +16,18 @@ class ThreeSixFiveScores:
         df_concat['estadistica'] = objeto['name']
         return df_concat
 
-    def get_league_top_players_stats(self, league_id):
+    def get_league_top_players_stats(self, league):
+        """Get top performers of certain statistics for a league and a season
+
+        Args:
+            league (str): Possible leagues in get_available_leagues("365Scores").
+                          The page don't show stats from previous seasons.
+
+        Returns:
+            total_df: DataFrame with all the stats, values and players.
+        """
+        leagues = get_possible_leagues_for_page(league, None, '365Scores')
+        league_id = leagues[league]['id']
         response = requests.get(f'https://webws.365scores.com/web/stats/?appTypeId=5&langId=29&timezoneName=America/Buenos_Aires&userCountryId=382&competitions={league_id}&competitors=&withSeasons=true')
         stats = response.json()
         general_stats = stats['stats']
@@ -28,6 +39,14 @@ class ThreeSixFiveScores:
         return total_df
     
     def get_ids(match_url):
+        """Extracts ids from a 365Scores match URL.
+
+        Args:
+            match_url (str): 365Scores match URL
+
+        Returns:
+            id_1, id_2: matchup id and game id.
+        """
         match = re.search(r'-(\d+-\d+-\d+)', match_url)
         id_1 = match.group(1) if match else None
     
@@ -37,12 +56,29 @@ class ThreeSixFiveScores:
         return id_1, id_2
     
     def get_match_data(self, match_url):
+        """Get data from a match and scrape it.
+
+        Args:
+            match_url (url): 365Scores match URL. Example: https://www.365scores.com/es-mx/football/match/copa-de-la-liga-profesional-7214/lanus-union-santa-fe-869-7206-7214#id=4033824
+
+        Returns:
+            match_data: Json with game data.
+        """
+        
         matchup_id, game_id = self.get_ids(match_url)
         response = requests.get(f'https://webws.365scores.com/web/game/?appTypeId=5&langId=29&timezoneName=America/Buenos_Aires&userCountryId=382&gameId={game_id}&matchupId={matchup_id}&topBookmaker=14')
         match_data = response.json()['game']
         return match_data
     
     def get_match_shotmap(self, match_url):
+        """Scrape shotmap from the page as a DataFrame, if the match has it.
+
+        Args:
+            match_url (url): 365Scores match URL. Example: https://www.365scores.com/es-mx/football/match/copa-de-la-liga-profesional-7214/lanus-union-santa-fe-869-7206-7214#id=4033824
+
+        Returns:
+            df: DataFrame with all the shot details from any shot shown in 365Scores UI.
+        """
         matchup_id, game_id = self.get_ids(match_url)
         match_data = self.get_match_data(game_id, matchup_id)
         json_tiros = match_data['chartEvents']['events']
@@ -50,6 +86,14 @@ class ThreeSixFiveScores:
         return df
     
     def get_players_info(self, match_url):
+        """Get players info for a certain match
+
+        Args:
+            match_url (url): 365Scores match URL. Example: https://www.365scores.com/es-mx/football/match/copa-de-la-liga-profesional-7214/lanus-union-santa-fe-869-7206-7214#id=4033824
+
+        Returns:
+            teams_df: Player data for a match as a DataFrame.
+        """
         matchup_id, game_id = self.get_ids(match_url)
         match_data = self.get_match_data(game_id, matchup_id)
         teams_json = match_data['members']
@@ -68,6 +112,14 @@ class ThreeSixFiveScores:
         return home, away
     
     def get_general_match_stats(self, match_url):
+        """Get general statistics for teams from a match
+
+        Args:
+            match_url (url): 365Scores match URL. Example: https://www.365scores.com/es-mx/football/match/copa-de-la-liga-profesional-7214/lanus-union-santa-fe-869-7206-7214#id=4033824
+
+        Returns:
+            df_total: DataFrame with the data from both teams in a match.
+        """
         matchup_id, game_id = self.get_ids(match_url)
         match_data = self.get_match_data(game_id, matchup_id)
         values = ['home', 'away']
@@ -79,6 +131,15 @@ class ThreeSixFiveScores:
         return df_total
 
     def get_player_heatmap_match(self, player, match_url):
+        """Get player heatmap for a certain match.
+
+        Args:
+            player (str): Player name, must be the same as it shows in the 365Scores page
+            match_url (url): 365Scores match URL. Example: https://www.365scores.com/es-mx/football/match/copa-de-la-liga-profesional-7214/lanus-union-santa-fe-869-7206-7214#id=4033824
+
+        Returns:
+            heatmap_image: Image of the
+        """
         matchup_id, game_id = self.get_ids(match_url)
         match_data = self.get_match_data(game_id, matchup_id)
         players = match_data['homeCompetitor']['lineups']['members']
