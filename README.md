@@ -14,10 +14,6 @@ En caso de querer actualizarla a la versión más reciente:
 ```bash
 pip install --upgrade LanusStats
 ```
-En caso de querer actualizarla a la versión más reciente:
-```bash
-pip install --upgrade LanusStats
-```
 
 La libreria consta de distintos módulos para sacar información de estas páginas:
 
