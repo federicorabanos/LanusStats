@@ -1,4 +1,6 @@
-![LanusStats logo](https://raw.githubusercontent.com/federicorabanos/LanusStats/main/lanusstats-logo.png)
+<p align="center">
+  <img src="https://raw.githubusercontent.com/federicorabanos/LanusStats/main/lanusstats-logo.png">
+</p>
 
 Esto es la líbreria de LanusStats, un lugar en donde se intentará hacerle la vida más facíla toda persona que este interesada en el ámbito del fútbol
 y los datos. Se van a tener recursos de todo tipo, desde scrapeo de información de distintas páginas/lugares hasta la posibilidad de hacer visualizaciones
