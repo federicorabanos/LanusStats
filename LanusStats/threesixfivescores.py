@@ -5,6 +5,7 @@ from PIL import Image
 import re
 from io import BytesIO
 from .functions import get_possible_leagues_for_page
+from .exceptions import MatchDoesntHaveInfo
 
 class ThreeSixFiveScores:
 
@@ -38,7 +39,7 @@ class ThreeSixFiveScores:
             total_df = pd.concat([total_df, stats_df])
         return total_df
     
-    def get_ids(match_url):
+    def get_ids(self, match_url):
         """Extracts ids from a 365Scores match URL.
 
         Args:
@@ -79,9 +80,11 @@ class ThreeSixFiveScores:
         Returns:
             df: DataFrame with all the shot details from any shot shown in 365Scores UI.
         """
-        matchup_id, game_id = self.get_ids(match_url)
-        match_data = self.get_match_data(game_id, matchup_id)
-        json_tiros = match_data['chartEvents']['events']
+        match_data = self.get_match_data(match_url)
+        try:
+            json_tiros = match_data['chartEvents']['events']
+        except KeyError:
+            raise MatchDoesntHaveInfo(match_url)
         df = pd.DataFrame(json_tiros)
         return df
     
@@ -94,8 +97,7 @@ class ThreeSixFiveScores:
         Returns:
             teams_df: Player data for a match as a DataFrame.
         """
-        matchup_id, game_id = self.get_ids(match_url)
-        match_data = self.get_match_data(game_id, matchup_id)
+        match_data = self.get_match_data(match_url)
         teams_json = match_data['members']
         teams_df = pd.DataFrame(teams_json)
         return teams_df
@@ -103,8 +105,7 @@ class ThreeSixFiveScores:
     def get_team_names(self, match_url):
         values = ['home', 'away']
         names = []
-        matchup_id, game_id = self.get_ids(match_url)
-        match_data = self.get_match_data(game_id, matchup_id)
+        match_data = self.get_match_data(match_url)
         for value in values:
             nombre = match_data[f'{value}Competitor']['name']
             names.append(nombre)
@@ -120,8 +121,7 @@ class ThreeSixFiveScores:
         Returns:
             df_total: DataFrame with the data from both teams in a match.
         """
-        matchup_id, game_id = self.get_ids(match_url)
-        match_data = self.get_match_data(game_id, matchup_id)
+        match_data = self.get_match_data(match_url)
         values = ['home', 'away']
         df_total = pd.DataFrame()
         for value in values:
@@ -140,12 +140,14 @@ class ThreeSixFiveScores:
         Returns:
             heatmap_image: Image of the
         """
-        matchup_id, game_id = self.get_ids(match_url)
-        match_data = self.get_match_data(game_id, matchup_id)
+        match_data = self.get_match_data(match_url)
         players = match_data['homeCompetitor']['lineups']['members']
         df_players = pd.DataFrame(players)
         players_total = pd.DataFrame(match_data['members'])
         df_players = df_players.merge(players_total, on='id', how='left')
-        heatmap = requests.get(df_players[df_players['name'] == player].heatMap.iloc[0])
+        try:
+            heatmap = requests.get(df_players[df_players['name'] == player].heatMap.iloc[0])
+        except AttributeError:
+            raise MatchDoesntHaveInfo(match_url)
         heatmap_image = Image.open(BytesIO(heatmap.content))
         return heatmap_image
