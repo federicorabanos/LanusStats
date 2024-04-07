@@ -260,7 +260,7 @@ class SofaScore:
 
         return df
 
-    def match_momentum(self, match_url):
+    def match_momentum(self, match_url, colors = ['red', 'green']):
         """Get the match momentum plot
         Args:
             match_url (str): Full link to a SofaScore match
@@ -273,7 +273,7 @@ class SofaScore:
         response = requests.get(graph_url, headers=headers)
         match_momentum_df = pd.DataFrame(response.json()['graphPoints'])
 
-        fig, ax = self.match_momentum_plot(match_momentum_df, match_id)
+        fig, ax = self.match_momentum_plot(match_momentum_df, match_id, colors)
 
         return fig, ax
 
