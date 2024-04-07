@@ -46,7 +46,22 @@ class Fbref:
             raise PlayerDoesntHaveInfo('path')
     
     def get_teams_season_stats(self, stat, league, season=None, save_csv=False, stats_vs=False, change_columns_names=False, add_page_name=False):
+        """Gets you a table of the stats for the teams in a certain league.
+
+        Args:
+            stat (str): Stat available for that league in Fbref
+            league (str): Possible leagues in get_available_leagues("Fbref")
+            season (str, optional): String showing the season for the data to be extracted. Defaults to None.
+            save_excel (bool, optional): If true it save an excel file. Defaults to False.
+            stats_vs (bool, optional): If true it gives you the VS stats of that table. Defaults to False.
+            change_columns_names (bool, optional): If you would like to change the columns names. Defaults to False.
+            add_page_name (bool, optional): It add the stat name to the columns. Defaults to False.
+
+        Returns:
+            data: DataFrame with the data of the stats of the teams.
+        """
         
+        print("Starting to scrape teams data from Fbref...")
         possible_stats_exception(self.possible_stats, stat)     
         leagues = get_possible_leagues_for_page(league, season, 'Fbref')
         
@@ -88,7 +103,7 @@ class Fbref:
 
         Args:
             stat (str): Stat available for that league in Fbref
-            league (str): League available in the scraper (check get_leagues())
+            league (str): Possible leagues in get_available_leagues("Fbref")
             season (str, optional): String showing the season for the data to be extracted. Defaults to None.
             save_excel (bool, optional): If true it save an excel file. Defaults to False.
             change_columns_names (bool, optional): If you would like to change the columns names. Defaults to False.
@@ -138,18 +153,26 @@ class Fbref:
             return cols
          
     def get_player_season_stats(self, stat, league, season=None, save_csv=False, add_page_name=False):
-        """_summary_
+        """Get players season stats for a particular stat.
 
         Args:
-            stat (_type_): _description_
-            league (_type_): _description_
-            save_csv (bool, optional): _description_. Defaults to False.
+            stat (str): stat possible (is a list)
+            league (str): Possible leagues in get_available_leagues("Fbref")
+            season (str, optional): Possible season in get_available_season_for_leagues("Fbref", league). Defaults to None (that gets you the most recent season)
+            save_csv (bool, optional): If true, it saves the tables as a csv. Defaults to False.
+            add_page_name (bool, optional): If true it adds the stat name to all the columns. Defaults to False
+            
+        Returns:
+            df_data: DataFrame with the data for that particular stat selected as a param
         """
+        
+        print("Starting to scrape player data from Fbref...")
         possible_stats_exception(self.possible_stats, stat)
         
         leagues = get_possible_leagues_for_page(league, season, 'Fbref')
         
         today = datetime.now().strftime('%Y-%m-%d')
+        
         if league == 'Big 5 European Leagues':
             path = f'https://fbref.com/en/comps/{leagues[league]["id"]}/{stat}/players/{leagues[league]["slug"]}-Stats'
         elif season != None:
@@ -209,6 +232,16 @@ class Fbref:
         return df_data
 
     def get_all_player_season_stats(self, league, save_csv=False):
+        """Gets a table of ALL the stats in a players page.
+
+        Args:
+            league (str): Possible leagues in get_available_leagues("Fbref")
+            save_csv (bool, optional): If true, it saves the tables as a csv. Defaults to False.
+
+        Returns:
+            data: DataFrame with all the stats of players
+            gk_data: DataFrame with all the stats relevant to goalkeepers
+        """
         
         today = datetime.now().strftime('%Y-%m-%d')
         data = pd.DataFrame()
@@ -254,6 +287,14 @@ class Fbref:
         return slice_colors, text_colors
     
     def get_player_percentiles(self, path):
+        """Gets you a table with the stats and percentiles of a certain player, if they have them.
+
+        Args:
+            path (str): URL to a player page in Fbref. Example: https://fbref.com/en/players/90a0bb3b/Victor-Malcorra
+
+        Returns:
+            player_df: DataFrame with the stats and values of the percentiles.
+        """
         self.player_info_exception(path)
         player_df = pd.read_html(path)[0]
         time.sleep(3)
@@ -265,6 +306,14 @@ class Fbref:
         return data
     
     def get_player_similarities(self, path):
+        """Gets you a table of player similarities.
+
+        Args:
+            path (str): URL to a player page in Fbref. Example: https://fbref.com/en/players/90a0bb3b/Victor-Malcorra
+
+        Returns:
+            data: DataFrame with the names of the players similar.
+        """
         self.player_info_exception(path)
         data = pd.read_html(path)[1]
         time.sleep(3)
@@ -283,5 +332,13 @@ class Fbref:
         return local_df, visit_df
 
     def get_tournament_table(self, path):
+        """Gets you the table of the league.
+
+        Args:
+            path (str): URL of the page of the league. Example: https://fbref.com/en/comps/21/Primera-Division-Stats
+
+        Returns:
+            data: DataFrame with the table.
+        """
         data = self.get_all_dfs(path)[0]
         return data
