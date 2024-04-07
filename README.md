@@ -10,6 +10,10 @@ Para instalarla, solamente tenes que correr esto en algun consola de comando:
 ```bash
 pip install LanusStats
 ```
+En caso de querer actualizarla a la versión más reciente:
+```bash
+pip install --upgrade LanusStats
+```
 
 La libreria consta de distintos módulos para sacar información de estas páginas:
 
@@ -70,17 +74,20 @@ get_all_player_season_stats("Copa de la Liga", save_csv=False, add_page_name=Fal
 ```
 
 * Del perfil de un jugar se puede sacar los percentiles y las similutdes (si las tiene)
+* Del perfil de un jugar se puede sacar los percentiles y las similutdes (si las tiene)
 ```bash
 get_player_percentiles("https://fbref.com/en/players/bc7dc64d/Bukayo-Saka")
 get_player_similarities("https://fbref.com/en/players/bc7dc64d/Bukayo-Saka")
 ```
 
 * De un partido en particular se puede sacar los tiros y las estadísticas generales (si las tiene)
+* De un partido en particular se puede sacar los tiros y las estadísticas generales (si las tiene)
 ```bash
 get_match_shots("https://fbref.com/en/matches/77d7e2d6/Arsenal-Luton-Town-April-3-2024-Premier-League")
 get_general_match_team_stats("https://fbref.com/en/matches/77d7e2d6/Arsenal-Luton-Town-April-3-2024-Premier-League")
 ```
 
+* Si queres scrapear la tabla de posiciones de una liga, podes:
 * Si queres scrapear la tabla de posiciones de una liga, podes:
 ```bash
 get_tournament_table("https://fbref.com/en/comps/9/Premier-League-Stats")
