@@ -58,7 +58,7 @@ class Fbref:
 
         Args:
             stat (str): Stat available for that league in Fbref
-            league (str): League available in the scraper (check get_leagues())
+            league (str): Possible leagues in get_available_leagues("Fbref")
             season (str, optional): String showing the season for the data to be extracted. Defaults to None.
             save_excel (bool, optional): If true it save an excel file. Defaults to False.
             stats_vs (bool, optional): If true it gives you the VS stats of that table. Defaults to False.
@@ -111,7 +111,7 @@ class Fbref:
 
         Args:
             stat (str): Stat available for that league in Fbref
-            league (str): League available in the scraper (check get_leagues())
+            league (str): Possible leagues in get_available_leagues("Fbref")
             season (str, optional): String showing the season for the data to be extracted. Defaults to None.
             save_excel (bool, optional): If true it save an excel file. Defaults to False.
             change_columns_names (bool, optional): If you would like to change the columns names. Defaults to False.

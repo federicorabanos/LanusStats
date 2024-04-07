@@ -73,6 +73,16 @@ class FotMob:
         ]
         
     def get_season_tables(self, league, season, table = ['all', 'home', 'away', 'form', 'xg']):
+        """Get standing tables from a list of possible ones from a certain season in a league.
+
+        Args:
+            league (str): Possible leagues in get_available_leagues("Fotmob")
+            season (str): Possible saeson in get_available_season_for_leagues("Fotmob", league)
+            table (list, optional): Type of table shown in FotMob UI. Defaults to ['all', 'home', 'away', 'form', 'xg'].
+
+        Returns:
+            table_df: DataFrame with the table/s. 
+        """
         leagues = get_possible_leagues_for_page(league, season, 'Fotmob')
         league_id = leagues[league]['id']
         season_string = season.replace('/', '%2F')
@@ -88,10 +98,31 @@ class FotMob:
         return table_df
     
     def request_match_details(self, match_id):
+        """Get match deatils with a request.
+
+        Args:
+            match_id (str): id of a certain match, could be found in the URL
+
+        Returns:
+            response: json with the response.
+        """
         response = requests.get(f'https://www.fotmob.com/api/matchDetails?matchId={match_id}')
         return response
     
     def get_players_stats_season(self, league, season, stat):
+        """Get players for a certain season and league stats. Possible stats are player_possible_stats.
+
+        Args:
+            league (str): Possible leagues in get_available_leagues("Fotmob")
+            season (str): Possible saeson in get_available_season_for_leagues("Fotmob", league)
+            stat (str): Value inside player_possible_stats
+
+        Raises:
+            InvalidStat: Raised when the input of stat is not inside the possible list values.
+
+        Returns:
+            df: DataFrame with the values and player names for that stat.
+        """
         print(f'Possible values for stat parameter: {self.player_possible_stats}')
         if stat not in self.player_possible_stats:
             raise InvalidStat(stat, self.player_possible_stats)
@@ -106,6 +137,19 @@ class FotMob:
         return df
     
     def get_teams_stats_season(self, league, season, stat):
+        """Get teams for a certain season and league stats. Possible stats are team_possible_stats.
+
+        Args:
+            league (str): Possible leagues in get_available_leagues("Fotmob")
+            season (str): Possible saeson in get_available_season_for_leagues("Fotmob", league)
+            stat (str): Value inside team_possible_stats
+
+        Raises:
+            InvalidStat: Raised when the input of stat is not inside the possible list values.
+
+        Returns:
+            df: DataFrame with stat values for teams in a league and season.
+        """
         print(f'Possible values for stat parameter: {self.team_possible_stats}')
         if stat not in self.team_possible_stats:
             raise InvalidStat(stat, self.team_possible_stats)
