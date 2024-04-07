@@ -2,7 +2,10 @@ Esto es la líbreria de LanusStats, un lugar en donde se intentará hacerle la v
 y los datos. Se van a tener recursos de todo tipo, desde scrapeo de información de distintas páginas/lugares hasta la posibilidad de hacer visualizaciones
 con solo una función.
 
-Para instalarla, solamente tenes que correr ```pip install LanusStats``` en algun consola de comando.
+Para instalarla, solamente tenes que correr esto en algun consola de comando:
+```bash
+pip install LanusStats
+```
 
 La libreria consta de distintos módulos para sacar información de estas páginas:
 
