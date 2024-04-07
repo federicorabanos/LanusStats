@@ -44,8 +44,8 @@ get_available_season_for_leagues(page, league)
 get_teams_season_stats('gca', 'Copa de la Liga', season='2024', save_csv=False, stats_vs=False, change_columns_names=False, add_page_name=False)
 ```
 **change_columns_names** te permite ponerle el nombre a columnas de tipo Unnamed: 0
-**add_page_name** le agrega el nombre de la página a las columnas, hay veces que se repiten los nombres entre páginas.
-**save_csv** exporta la tabla a un csv
+**add_page_name** le agrega el nombre de la página a las columnas, hay veces que se repiten los nombres entre páginas.\n
+**save_csv** exporta la tabla a un csv\n
 **stats_vs** te permite scrapear las tablas de estadísticas vs que en Fbref está la posibilidad.
 
 Si esto lo queres hacer todo junto, podes usar ```get_vs_and_teams_season_stats```. Ejemplo:
