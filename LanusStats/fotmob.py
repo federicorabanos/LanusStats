@@ -164,6 +164,19 @@ class FotMob:
         return df
 
     def get_match_shotmap(self, match_id):
+        """Scrape a match shotmap, if it has one.
+
+        Args:
+            match_id (str): Id of a FotMob match, could be found in the URL.
+                            Example: https://www.fotmob.com/es/matches/boca-juniors-vs-newells-old-boys/3ef4me#4393680
+                            4393680 is the match_id.
+
+        Raises:
+            MatchDoesntHaveInfo: Raised when the match associated with the match_id doesn't have a shotmap.
+
+        Returns:
+            shotmap: DataFrame with the data for all the shots shown in the FotMob UI.
+        """
         response = self.request_match_details(match_id)
         time.sleep(1)
         df_shotmap = pd.DataFrame(response.json()['content']['shotmap']['shots'])
@@ -174,6 +187,16 @@ class FotMob:
         return shotmap
     
     def get_team_colors(self, match_id):
+        """Get team colors as FotMob UI uses.
+
+        Args:
+            match_id (str): Id of a FotMob match, could be found in the URL.
+                            Example: https://www.fotmob.com/es/matches/boca-juniors-vs-newells-old-boys/3ef4me#4393680
+                            4393680 is the match_id.
+
+        Returns:
+            home_color, away_color: strings with hex codes.
+        """
         response = self.request_match_details(match_id)
         time.sleep(1)
         colors = response.json()['general']['teamColors']
@@ -224,6 +247,16 @@ class FotMob:
         return fig, ax
     
     def get_general_match_stats(self,match_id):
+        """Get general match stats for a certain match (shots, passes, duels won for the teams).
+
+        Args:
+            match_id (str): Id of a FotMob match, could be found in the URL.
+                            Example: https://www.fotmob.com/es/matches/boca-juniors-vs-newells-old-boys/3ef4me#4393680
+                            4393680 is the match_id.
+
+        Returns:
+            total_df: DataFrame with the stats of the teams for a certain match
+        """
         response = self.request_match_details(match_id)
         time.sleep(1)
         total_df = pd.DataFrame()
@@ -237,6 +270,18 @@ class FotMob:
         return total_df
     
     def get_player_shotmap(self, league, season, player_id):
+        """Scrape a player shotmap from a certain league and season, if they have one.
+
+        Args:
+            league (str): Possible leagues in get_available_leagues("Fotmob")
+            season (str): Possible saeson in get_available_season_for_leagues("Fotmob", league)
+            player_id (str): FotMob Id of a player. Could be found in the URL of a specific player.
+                             Example: https://www.fotmob.com/es/players/727095/ignacio-ramirez
+                             727095 is the player_id.
+
+        Returns:
+            shotmap: DataFrame with the data for all the shots shown in the FotMob UI.
+        """
         leagues = get_possible_leagues_for_page(league, season, 'Fotmob')
         league_id = leagues[league]['id']
         season_string = season.replace('/', '%2F')

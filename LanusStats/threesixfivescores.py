@@ -4,6 +4,7 @@ import json
 from PIL import Image
 import re
 from io import BytesIO
+from .functions import get_possible_leagues_for_page
 
 class ThreeSixFiveScores:
 

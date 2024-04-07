@@ -360,22 +360,28 @@ def get_possible_leagues(league, season, page):
         },
         '365Scores': {
             'Argentina Copa de la Liga': {
-                'id': 7214
+                'id': 7214,
+                'seasons': None
             },
             'Primera Division Argentina': {
-                'id': 72
+                'id': 72,
+                'seasons': None
             },
             'Primera Nacional Argentina': {
-                'id': 419
+                'id': 419,
+                'seasons': None
             },
             'Brasileirao': {
-                'id': 113
+                'id': 113,
+                'seasons': None
             },
             'Champions League': {
-                'id': 572
+                'id': 572,
+                'seasons': None
             },
             'Primera Division Colombia': {
-                'id': 620
+                'id': 620,
+                'seasons': None
             }
         },
         'Fotmob': {
