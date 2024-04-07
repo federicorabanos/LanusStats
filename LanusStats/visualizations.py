@@ -1,5 +1,3 @@
-
-
 import matplotlib.pyplot as plt
 import pandas as pd
 from mplsoccer import PyPizza, add_image, FontManager
