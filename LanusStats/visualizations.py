@@ -1,10 +1,13 @@
 
 
-from mplsoccer import PyPizza, add_image, FontManager
 import matplotlib.pyplot as plt
+import pandas as pd
+from mplsoccer import PyPizza, add_image, FontManager
 from PIL import Image
+from .exceptions import MatchDoesntHaveInfo
 from .fbref import Fbref
-fbref = Fbref()
+from .fotmob import FotMob
+fbref, fotmob = Fbref(), FotMob()
 
 #Fonts
 font_normal = FontManager('https://raw.githubusercontent.com/googlefonts/roboto/main/'
@@ -150,3 +153,40 @@ def fbref_plot_player_percentiles(path, image=None, chart_stats=None, save_image
     if save_image:
         print('Saving image...')
         plt.savefig(f'{name} fbref percentile plot.png', dpi=300, bbox_inches='tight')
+        
+def fotmob_match_momentum_plot(match_id, save_fig=False):
+    """Plot Match Momentum
+    Args:
+        match_momentum_df (DataFrame): DataFrame generated in match_momentum functions. Contains two columns: Minute and value (if > 0, momentum was with home side and viceversa)
+        match_id (string): Match Id for a FotMob match. Example: https://www.fotmob.com/es/matches/man-city-vs-crystal-palace/2ri9zd#4193843
+        save_fig (bool, optional): Save figure or not.
+    Returns:
+        fig, ax: A png and the fig and axes for further customization
+    """
+    response = fotmob.request_match_details(match_id)
+    home_color, away_color = fotmob.get_team_colors(match_id)
+        
+    try:
+        match_momentum_df = pd.DataFrame(response.json()['content']['matchFacts']['momentum']['main']['data'])
+    except KeyError:
+        raise MatchDoesntHaveInfo(match_id)
+    
+    plot_colors = [f'{home_color}' if value < 0 else f'{away_color}' for value in match_momentum_df.value]
+
+    fig,ax = plt.subplots(figsize=(16,9))
+    fig.set_facecolor('white')
+    
+
+    ax.bar(match_momentum_df.minute, match_momentum_df.value, color=plot_colors)
+    ax.axvline(45.5, ls=':')
+    ax.set_xlabel('Minutes')
+    ax.set_xticks(range(0,91,10))
+    ax.set_xlim(0,91)
+
+    plt.gca()
+    ax.spines[['top', 'right', 'left']].set_visible(False)
+    ax.set_yticks([])
+    if save_fig:
+        plt.savefig(f'{match_id}_match_momentum.png', bbox_inches='tight')
+
+    return fig, ax

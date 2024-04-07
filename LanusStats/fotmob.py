@@ -142,43 +142,6 @@ class FotMob:
             away_color = colors['lightMode']['away']
         return home_color, away_color    
     
-    def match_momentum_plot(self, match_id, save_fig=False):
-        """Plot Match Momentum
-        Args:
-            match_momentum_df (DataFrame): DataFrame generated in match_momentum functions. Contains two columns: Minute and value (if > 0, momentum was with home side and viceversa)
-            match_id (string): Match Id for a FotMob match
-            save_fig (bool, optional): Save figure or not.
-        Returns:
-            fig, ax: A png and the fig and axes for further customization
-        """
-        home_color, away_color = self.get_team_colors(match_id)
-            
-        response = self.request_match_details(match_id)
-        try:
-            match_momentum_df = pd.DataFrame(response.json()['content']['matchFacts']['momentum']['main']['data'])
-        except KeyError:
-            raise MatchDoesntHaveInfo(match_id)
-        
-        plot_colors = [f'{home_color}' if value < 0 else f'{away_color}' for value in match_momentum_df.value]
-
-        fig,ax = plt.subplots(figsize=(16,9))
-        fig.set_facecolor('white')
-        
-
-        ax.bar(match_momentum_df.minute, match_momentum_df.value, color=plot_colors)
-        ax.axvline(45.5, ls=':')
-        ax.set_xlabel('Minutes')
-        ax.set_xticks(range(0,91,10))
-        ax.set_xlim(0,91)
-
-        plt.gca()
-        ax.spines[['top', 'right', 'left']].set_visible(False)
-        ax.set_yticks([])
-        if save_fig:
-            plt.savefig(f'{match_id}_match_momentum.png', bbox_inches='tight')
-
-        return fig, ax
-    
     def get_general_match_stats(self,match_id):
         response = self.request_match_details(match_id)
         time.sleep(1)
