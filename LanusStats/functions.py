@@ -420,11 +420,11 @@ def get_possible_leagues(league, season, page):
     
     possible_leagues_list = list(possible_leagues[page].keys())
     if league not in possible_leagues_list:
-        raise InvalidLeagueException('league', possible_leagues_list)
+        raise InvalidLeagueException(league, possible_leagues_list)
     
     possible_seasons_list = list(possible_leagues[page][league]['seasons'])
     if season != None and season not in possible_seasons_list:
-        raise InvalidSeasonException('league', possible_seasons_list)
+        raise InvalidSeasonException(season, possible_seasons_list)
     
     return possible_leagues
 
