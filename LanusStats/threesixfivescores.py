@@ -6,6 +6,7 @@ import re
 from io import BytesIO
 from .functions import get_possible_leagues_for_page
 from .exceptions import MatchDoesntHaveInfo
+from .config import headers
 import time
 
 class ThreeSixFiveScores:
@@ -30,7 +31,7 @@ class ThreeSixFiveScores:
         """
         leagues = get_possible_leagues_for_page(league, None, '365Scores')
         league_id = leagues[league]['id']
-        response = requests.get(f'https://webws.365scores.com/web/stats/?appTypeId=5&langId=29&timezoneName=America/Buenos_Aires&userCountryId=382&competitions={league_id}&competitors=&withSeasons=true')
+        response = requests.get(f'https://webws.365scores.com/web/stats/?appTypeId=5&langId=29&timezoneName=America/Buenos_Aires&userCountryId=382&competitions={league_id}&competitors=&withSeasons=true', headers=headers)
         time.sleep(3)
         stats = response.json()
         general_stats = stats['stats']
@@ -69,7 +70,7 @@ class ThreeSixFiveScores:
         """
         
         matchup_id, game_id = self.get_ids(match_url)
-        response = requests.get(f'https://webws.365scores.com/web/game/?appTypeId=5&langId=29&timezoneName=America/Buenos_Aires&userCountryId=382&gameId={game_id}&matchupId={matchup_id}&topBookmaker=14')
+        response = requests.get(f'https://webws.365scores.com/web/game/?appTypeId=5&langId=29&timezoneName=America/Buenos_Aires&userCountryId=382&gameId={game_id}&matchupId={matchup_id}&topBookmaker=14', headers=headers)
         time.sleep(3)
         match_data = response.json()['game']
         return match_data
@@ -149,7 +150,7 @@ class ThreeSixFiveScores:
         players_total = pd.DataFrame(match_data['members'])
         df_players = df_players.merge(players_total, on='id', how='left')
         try:
-            heatmap = requests.get(df_players[df_players['name'] == player].heatMap.iloc[0])
+            heatmap = requests.get(df_players[df_players['name'] == player].heatMap.iloc[0], headers=headers)
             time.sleep(3)
         except AttributeError:
             raise MatchDoesntHaveInfo(match_url)

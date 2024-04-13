@@ -1,10 +1,11 @@
 import requests
 import pandas as pd
 import json
-from .functions import get_possible_leagues_for_page
-import time
-from .exceptions import InvalidStat, MatchDoesntHaveInfo
 import matplotlib.pyplot as plt
+import time
+from .functions import get_possible_leagues_for_page
+from .exceptions import InvalidStat, MatchDoesntHaveInfo
+from .config import headers
 
 class FotMob:
     
@@ -86,7 +87,7 @@ class FotMob:
         leagues = get_possible_leagues_for_page(league, season, 'Fotmob')
         league_id = leagues[league]['id']
         season_string = season.replace('/', '%2F')
-        response = requests.get(f'https://www.fotmob.com/api/leagues?id={league_id}&ccode3=ARG&season={season_string}')
+        response = requests.get(f'https://www.fotmob.com/api/leagues?id={league_id}&ccode3=ARG&season={season_string}', headers=headers)
         time.sleep(3)
         try:
             tables = response.json()['table'][0]['data']['table']
@@ -107,7 +108,7 @@ class FotMob:
         Returns:
             response: json with the response.
         """
-        response = requests.get(f'https://www.fotmob.com/api/matchDetails?matchId={match_id}')
+        response = requests.get(f'https://www.fotmob.com/api/matchDetails?matchId={match_id}', headers=headers)
         time.sleep(3)
         return response
     
@@ -131,7 +132,7 @@ class FotMob:
         leagues = get_possible_leagues_for_page(league, season, 'Fotmob')
         league_id = leagues[league]['id']
         season_id = leagues[league]['seasons'][season]
-        response = requests.get(f'https://www.fotmob.com/api/leagueseasondeepstats?id={league_id}&season={season_id}&type=players&stat={stat}')
+        response = requests.get(f'https://www.fotmob.com/api/leagueseasondeepstats?id={league_id}&season={season_id}&type=players&stat={stat}', headers=headers)
         time.sleep(3)
         df_1 = pd.DataFrame(response.json()['statsData'])
         df_2 = pd.DataFrame(response.json()['statsData']).statValue.apply(pd.Series)
@@ -158,7 +159,7 @@ class FotMob:
         leagues = get_possible_leagues_for_page(league, season, 'Fotmob')
         league_id = leagues[league]['id']
         season_id = leagues[league]['seasons'][season]
-        response = requests.get(f'https://www.fotmob.com/api/leagueseasondeepstats?id={league_id}&season={season_id}&type=teams&stat={stat}')
+        response = requests.get(f'https://www.fotmob.com/api/leagueseasondeepstats?id={league_id}&season={season_id}&type=teams&stat={stat}', headers=headers)
         time.sleep(3)
         df_1 = pd.DataFrame(response.json()['statsData'])
         df_2 = pd.DataFrame(response.json()['statsData']).statValue.apply(pd.Series)
@@ -250,7 +251,7 @@ class FotMob:
         leagues = get_possible_leagues_for_page(league, season, 'Fotmob')
         league_id = leagues[league]['id']
         season_string = season.replace('/', '%2F')
-        response = requests.get(f'https://www.fotmob.com/api/playerStats?playerId={player_id}&seasonId={season_string}-{league_id}')
+        response = requests.get(f'https://www.fotmob.com/api/playerStats?playerId={player_id}&seasonId={season_string}-{league_id}', headers=headers)
         time.sleep(3)
         shotmap = pd.DataFrame(response.json()['shotmap'])
         return shotmap
