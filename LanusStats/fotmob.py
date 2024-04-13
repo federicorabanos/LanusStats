@@ -87,6 +87,7 @@ class FotMob:
         league_id = leagues[league]['id']
         season_string = season.replace('/', '%2F')
         response = requests.get(f'https://www.fotmob.com/api/leagues?id={league_id}&ccode3=ARG&season={season_string}')
+        time.sleep(3)
         try:
             tables = response.json()['table'][0]['data']['table']
             table = tables[table]
@@ -107,6 +108,7 @@ class FotMob:
             response: json with the response.
         """
         response = requests.get(f'https://www.fotmob.com/api/matchDetails?matchId={match_id}')
+        time.sleep(3)
         return response
     
     def get_players_stats_season(self, league, season, stat):
@@ -130,7 +132,7 @@ class FotMob:
         league_id = leagues[league]['id']
         season_id = leagues[league]['seasons'][season]
         response = requests.get(f'https://www.fotmob.com/api/leagueseasondeepstats?id={league_id}&season={season_id}&type=players&stat={stat}')
-        time.sleep(1)
+        time.sleep(3)
         df_1 = pd.DataFrame(response.json()['statsData'])
         df_2 = pd.DataFrame(response.json()['statsData']).statValue.apply(pd.Series)
         df = pd.concat([df_1, df_2], axis=1)
@@ -157,7 +159,7 @@ class FotMob:
         league_id = leagues[league]['id']
         season_id = leagues[league]['seasons'][season]
         response = requests.get(f'https://www.fotmob.com/api/leagueseasondeepstats?id={league_id}&season={season_id}&type=teams&stat={stat}')
-        time.sleep(1)
+        time.sleep(3)
         df_1 = pd.DataFrame(response.json()['statsData'])
         df_2 = pd.DataFrame(response.json()['statsData']).statValue.apply(pd.Series)
         df = pd.concat([df_1, df_2], axis=1)
@@ -249,5 +251,6 @@ class FotMob:
         league_id = leagues[league]['id']
         season_string = season.replace('/', '%2F')
         response = requests.get(f'https://www.fotmob.com/api/playerStats?playerId={player_id}&seasonId={season_string}-{league_id}')
+        time.sleep(3)
         shotmap = pd.DataFrame(response.json()['shotmap'])
         return shotmap
