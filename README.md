@@ -136,11 +136,37 @@ get_player_shotmap("Premier League", "2023/2024", 1203665)
 ```
 El 3º parametro es el id que se encuentra en la url, ejemplo: https://www.fotmob.com/es/players/1203665/alejandro-garnacho
 
-## 365 Scores
+## [365 Scores](https://github.com/federicorabanos/LanusStats/blob/main/LanusStats/threesixfivescores.py)
 
 ## SofaScore
 
-## Visualizaciones
+Por el momento no está disponible el scraper de SofaScore
+
+## [Visualizaciones](https://github.com/federicorabanos/LanusStats/blob/main/LanusStats/visualizations.py)
+
+Hay visualizaciones seteadas para hacer desde una función que scrapean usando las funciones de la libreria y visualizan la información de cierta manera para que se puede customizar o usar derecho.
+
+* Plotear percentiles de los jugadores de Fbref en un grafico de MPLSoccer
+
+```bash
+fbref_plot_player_percentiles(path="https://fbref.com/en/players/058c938c/Marcelino-Moreno", image=None, chart_stats = ["shots", "passes", "defense"], save_image=True, name_extra = "- Lanus", credit_extra= "")
+```
+
+**path** Link del jugador en Fbref
+**image** path de una imagen que quieras usar, se recomienda pasarla por https://crop-circle.imageonline.co/
+**chart_stats** agregar rectangulos y nombres de las estadísticas al gráfico
+**save_image** si guarda el png de la visualización
+**name_extra** agregarle un string al título
+**credit_extra** agregarle un string a los créditos
+
+* Plotear match momentum de FotMob
+
+```bash
+fotmob_match_momentum_plot(match_id=4193851, save_fig=False)
+```
+
+**match_id** es el que se encuentra en la url, ejemplo: https://www.fotmob.com/es/matches/afc-bournemouth-vs-manchester-united/2yrx85#4193851
+**save_fig** si guardo la imagen o no
 
 ---
 
