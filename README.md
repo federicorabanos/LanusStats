@@ -90,11 +90,58 @@ get_general_match_team_stats("https://fbref.com/en/matches/77d7e2d6/Arsenal-Luto
 get_tournament_table("https://fbref.com/en/comps/9/Premier-League-Stats")
 ```
 
-## FotMob
+## [FotMob](https://github.com/federicorabanos/LanusStats/blob/main/LanusStats/fotmob.py)
 
-## SofaScore
+* Para obtener las distintas tablas que pueden haber en la UI de Fotmob ([ejemplo](https://www.fotmob.com/es/leagues/47/table/premier-league)) pueden usar:
+
+```bash
+get_season_tables("Premier League", "2022/2023", "xg")
+```
+
+* Para obtener información de estadísticas de una temporada ([ejemplo](https://www.fotmob.com/es/leagues/47/stats/premier-league)):
+
+** De los jugadores puedes usar:
+
+```
+bash
+get_players_stats_season("Premier League", "2023/2024", "expected_assists_per_90")
+```
+
+** De los equipos puedes usar:
+
+```
+bash
+get_teams_stats_season("Premier League", "2023/2024", "poss_won_att_3rd_team")
+```
+
+* De un partido ([ejemplo](https://www.fotmob.com/es/matches/afc-bournemouth-vs-manchester-united/2yrx85#4193851)) la información que puedes sacar es de:
+
+** Mapa de tiros:
+```
+bash
+get_match_shotmap(4193851)
+```
+
+** Estadísticas generales de los equipos:
+```
+bash
+get_general_match_stats(4193851)
+```
+
+Aclaración: El id de parametro es el que se encuentra en la url, ejemplo: https://www.fotmob.com/es/matches/afc-bournemouth-vs-manchester-united/2yrx85#4193851
+
+* También puedes obtener información de un jugador:
+
+** Mapa de tiros ([ejemplo](https://www.fotmob.com/es/players/1203665/alejandro-garnacho)):
+```
+bash
+get_player_shotmap("Premier League", "2023/2024", 1203665)
+```
+El 3º parametro es el id que se encuentra en la url, ejemplo: https://www.fotmob.com/es/players/1203665/alejandro-garnacho
 
 ## 365 Scores
+
+## SofaScore
 
 ## Visualizaciones
 
