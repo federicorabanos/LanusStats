@@ -152,12 +152,15 @@ Hay visualizaciones seteadas para hacer desde una función que scrapean usando l
 fbref_plot_player_percentiles(path="https://fbref.com/en/players/058c938c/Marcelino-Moreno", image=None, chart_stats = ["shots", "passes", "defense"], save_image=True, name_extra = "- Lanus", credit_extra= "")
 ```
 
-**path** Link del jugador en Fbref
-**image** path de una imagen que quieras usar, se recomienda pasarla por https://crop-circle.imageonline.co/
-**chart_stats** agregar rectangulos y nombres de las estadísticas al gráfico
-**save_image** si guarda el png de la visualización
-**name_extra** agregarle un string al título
-**credit_extra** agregarle un string a los créditos
+**path** Link del jugador en Fbref  
+**image** path de una imagen que quieras usar, se recomienda pasarla por https://crop-circle.imageonline.co/  
+**chart_stats** agregar rectangulos y nombres de las estadísticas al gráfico  
+**save_image** si guarda el png de la visualización  
+**name_extra** agregarle un string al título  
+**credit_extra** agregarle un string a los créditos  
+
+Ejemplo: ![Marcelino Moreno fbref percentile plot](https://github.com/federicorabanos/LanusStats/assets/101477588/d2c41dd6-8271-498f-8849-73ee093529b4)
+
 
 * Plotear match momentum de FotMob
 
