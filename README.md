@@ -49,7 +49,9 @@ get_teams_season_stats('gca', 'Copa de la Liga', season='2024', save_csv=False, 
 ```
 **change_columns_names** te permite ponerle el nombre a columnas de tipo Unnamed: 0
 **add_page_name** le agrega el nombre de la página a las columnas, hay veces que se repiten los nombres entre páginas
+
 **save_csv** exporta la tabla a un csv
+
 **stats_vs** te permite scrapear las tablas de estadísticas vs que en Fbref está la posibilidad
 
 Si esto lo queres hacer todo junto, podes usar ```get_vs_and_teams_season_stats```. Ejemplo:
@@ -102,29 +104,25 @@ get_season_tables("Premier League", "2022/2023", "xg")
 
 ** De los jugadores puedes usar:
 
-```
-bash
+```bash
 get_players_stats_season("Premier League", "2023/2024", "expected_assists_per_90")
 ```
 
 ** De los equipos puedes usar:
 
-```
-bash
+```bash
 get_teams_stats_season("Premier League", "2023/2024", "poss_won_att_3rd_team")
 ```
 
 * De un partido ([ejemplo](https://www.fotmob.com/es/matches/afc-bournemouth-vs-manchester-united/2yrx85#4193851)) la información que puedes sacar es de:
 
 ** Mapa de tiros:
-```
-bash
+```bash
 get_match_shotmap(4193851)
 ```
 
 ** Estadísticas generales de los equipos:
-```
-bash
+```bash
 get_general_match_stats(4193851)
 ```
 
@@ -133,8 +131,7 @@ Aclaración: El id de parametro es el que se encuentra en la url, ejemplo: https
 * También puedes obtener información de un jugador:
 
 ** Mapa de tiros ([ejemplo](https://www.fotmob.com/es/players/1203665/alejandro-garnacho)):
-```
-bash
+```bash
 get_player_shotmap("Premier League", "2023/2024", 1203665)
 ```
 El 3º parametro es el id que se encuentra en la url, ejemplo: https://www.fotmob.com/es/players/1203665/alejandro-garnacho
