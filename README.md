@@ -48,11 +48,9 @@ get_available_season_for_leagues(page, league)
 get_teams_season_stats('gca', 'Copa de la Liga', season='2024', save_csv=False, stats_vs=False, change_columns_names=False, add_page_name=False)
 ```
 **change_columns_names** te permite ponerle el nombre a columnas de tipo Unnamed: 0
-**add_page_name** le agrega el nombre de la página a las columnas, hay veces que se repiten los nombres entre páginas
-
-**save_csv** exporta la tabla a un csv
-
-**stats_vs** te permite scrapear las tablas de estadísticas vs que en Fbref está la posibilidad
+**add_page_name** le agrega el nombre de la página a las columnas, hay veces que se repiten los nombres entre páginas  
+**save_csv** exporta la tabla a un csv  
+**stats_vs** te permite scrapear las tablas de estadísticas vs que en Fbref está la posibilidad  
 
 Si esto lo queres hacer todo junto, podes usar ```get_vs_and_teams_season_stats```. Ejemplo:
 ```bash
@@ -168,7 +166,7 @@ Ejemplo: ![Marcelino Moreno fbref percentile plot](https://github.com/federicora
 fotmob_match_momentum_plot(match_id=4193851, save_fig=False)
 ```
 
-**match_id** es el que se encuentra en la url, ejemplo: https://www.fotmob.com/es/matches/afc-bournemouth-vs-manchester-united/2yrx85#4193851
+**match_id** es el que se encuentra en la url, ejemplo: https://www.fotmob.com/es/matches/afc-bournemouth-vs-manchester-united/2yrx85#4193851  
 **save_fig** si guardo la imagen o no
 
 ---
