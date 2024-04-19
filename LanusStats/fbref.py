@@ -130,16 +130,18 @@ class Fbref:
 
         return df_total
         
-    def get_all_teams_season_stats(self, league, save_csv=False, stats_vs=False, change_columns_names=False, add_page_name=False):
+    def get_all_teams_season_stats(self, league, season, save_csv=False, stats_vs=False, change_columns_names=False, add_page_name=False):
         
         today = datetime.now().strftime('%Y-%m-%d')
         data = pd.DataFrame()
         for stat in self.possible_stats:
-            placeholder = self.get_teams_season_stats(f'{stat}',league, False, stats_vs, change_columns_names, add_page_name)
+            placeholder = self.get_teams_season_stats(f'{stat}',league, season, False, stats_vs, change_columns_names, add_page_name)
             data = pd.concat([data, placeholder], axis=1)
         
-        if save_csv:
-              data.to_csv(f'{league} - {stat} - {today}.csv')
+        if save_csv and stats_vs:
+            data.to_csv(f'{league} - {stat} - team vs stats - {today}.csv')
+        elif save_csv: 
+            data.to_csv(f'{league} - {stat} - team stats - {today}.csv')
 
         return data
 
@@ -231,7 +233,7 @@ class Fbref:
         
         return df_data
 
-    def get_all_player_season_stats(self, league, save_csv=False):
+    def get_all_player_season_stats(self, league, season, save_csv=False):
         """Gets a table of ALL the stats in a players page.
 
         Args:
@@ -249,20 +251,20 @@ class Fbref:
         for stat in self.possible_stats:
             print(stat)
             if stat in ['keepers', 'keepersadv']:
-                placeholder = self.get_player_season_stats(f'{stat}',league, False, True)
+                placeholder = self.get_player_season_stats(f'{stat}',league, season, False, True)
                 if len(gk_data) == 0:
                     gk_data = pd.concat([gk_data, placeholder], axis=1)
                 else:
                     gk_data = gk_data.merge(placeholder, on='Player', how='left')
             else:
-                placeholder = self.get_player_season_stats(f'{stat}',league, False, True)
+                placeholder = self.get_player_season_stats(f'{stat}',league, season, False, True)
                 if len(data) == 0:
                     data = pd.concat([data, placeholder], axis=1)
                 else:
                     data = data.merge(placeholder, on='Player', how='left')
         
         if save_csv:
-              data.to_csv(f'{league} - {stat} - {today}.csv')
+              data.to_csv(f'{league} - {stat} - player stats - {today}.csv')
 
         #To avoid duplicates of players that played for two clubs in the same competition
         data = data.drop_duplicates(subset=['Player', 'stats_Squad']).reset_index(drop=True)
