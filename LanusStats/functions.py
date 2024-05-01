@@ -1,4 +1,5 @@
 from .exceptions import *
+import numpy as np
 
 def get_possible_leagues(league, season, page):
     """Dictionary with all the possible pages, leagues and season for the scraper.
