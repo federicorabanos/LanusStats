@@ -1,11 +1,18 @@
 import matplotlib.pyplot as plt
 import pandas as pd
-from mplsoccer import PyPizza, add_image, FontManager
+import urllib
+import numpy as np
+from mplsoccer import PyPizza, add_image, FontManager, VerticalPitch, Pitch
 from PIL import Image
+from matplotlib.patches import RegularPolygon
+import matplotlib.patheffects as path_effects
 from .exceptions import MatchDoesntHaveInfo
 from .fbref import Fbref
 from .fotmob import FotMob
-fbref, fotmob = Fbref(), FotMob()
+from .functions import semicircle
+from .config import soc_cm
+from .threesixfivescores import ThreeSixFiveScores
+fbref, fotmob, threesixfivescores = Fbref(), FotMob(), ThreeSixFiveScores()
 
 #Fonts
 font_normal = FontManager('https://raw.githubusercontent.com/googlefonts/roboto/main/'
@@ -188,3 +195,213 @@ def fotmob_match_momentum_plot(match_id, save_fig=False):
         plt.savefig(f'{match_id}_match_momentum.png', bbox_inches='tight')
 
     return fig, ax
+
+def fotmob_hexbin_shotmap(league, season, player_id, credit_extra=' ', save_fig=False):
+    """Gets a player, league and season and plots an hexbin plot of the shots that player took in that tournament according to FotMob page.
+    Inspired and most of the code is by: https://github.com/sonofacorner/soc-viz-of-the-week
+
+    Args:
+        league (str): Possible leagues in get_available_leagues("Fotmob")
+        season (str): Possible saeson in get_available_season_for_leagues("Fotmob", league)
+        player_id (str): FotMob Id of a player. Could be found in the URL of a specific player.
+                            Example: https://www.fotmob.com/es/players/727095/ignacio-ramirez
+                            727095 is the player_id.
+        credit_extra (str, optional): If you want to add your name or handle. Defaults to ' '.
+        save_fig (bool, optional): Saves the image to a png. Defaults to False.
+    """
+    df = fotmob.get_player_shotmap(league, season, player_id)
+    
+    df = df[df['situation'] != 'Penalty']
+    
+    first_row = df.iloc[0]
+    team_id = first_row.get('teamId')
+    team_name = np.where(team_id == first_row['homeTeamId'], first_row['homeTeamName'], first_row['awayTeamName']).item()
+
+    data = df[['eventType', 'playerName', 'x', 'y', 'expectedGoals', 'teamId', 'teamColor', 'teamColorDark']]
+    plt.rcParams['hatch.linewidth'] = .02
+    fig, ax = plt.subplots(figsize=(8,6), dpi=300)
+    pitch = VerticalPitch(
+        pitch_type='custom',
+        half=True,
+        goal_type='box',
+        linewidth=1.25,
+        line_color='black',
+        pad_bottom=-8,
+        pad_top=13,
+        pitch_length=105,
+        pitch_width=68
+    )
+    pitch.draw(ax = ax)
+
+    bins = pitch.hexbin(x=data['x'], y=data['y'], ax=ax, cmap=soc_cm, gridsize=(14,14), zorder=-1, edgecolors='#efe9e6', alpha=0.9, lw=.25)
+
+    x_circle, y_circle = semicircle(104.8 - data['x'].median(), 34, 104.8)  # function call
+    ax.plot(x_circle, y_circle, ls='--', color='red', lw=.75)
+
+    annot_x = [54 - x*14 for x in range(0,4)] 
+    annot_texts = ['Goles', 'xG', 'Tiros', 'xG/tiro']
+    annot_stats = [data[data['eventType'] == 'Goal'].shape[0], round(data.expectedGoals.sum(), 2), data.shape[0], round(data['expectedGoals'].sum()/data.shape[0],2)]
+    for x,s,stat in zip(annot_x, annot_texts, annot_stats):
+        hex_annotation = RegularPolygon((x, 70), numVertices=6, radius=4.5, edgecolor='black', fc='None', hatch='.........', lw=1.25)
+        ax.add_patch(hex_annotation)
+        ax.annotate(
+            xy=(x,70),
+            text=s,
+            xytext=(0,-35),
+            textcoords='offset points',
+            size=10,
+            ha='center',
+            va='center'
+        )
+        if isinstance(stat, int):
+            text_stat = f'{stat:.0f}'
+        else:
+            text_stat = f'{stat:.2f}'
+        text_ = ax.annotate(
+            xy=(x,70),
+            text=text_stat,
+            xytext=(0,0),
+            textcoords='offset points',
+            size=15,
+            ha='center',
+            va='center',
+            weight='bold'
+        )
+        text_.set_path_effects(
+            [path_effects.Stroke(linewidth=1.5, foreground='#efe9e6'), path_effects.Normal()]
+        )
+
+    # Draw the annotations at the top of the box.
+    median_annotation = ax.annotate(
+        xy=(34,109),
+        xytext=(x_circle[-1], 109),
+        text=f"{((105 - data['x'].median())*18)/16.5:.1f} m.",
+        fontproperties = font_normal.prop,
+        size=10,
+        color='red',
+        ha='right',
+        va='center',
+        arrowprops=dict(arrowstyle= '<|-, head_width=0.35, head_length=0.65',
+            color='red',
+            fc='#efe9e6',
+            lw=0.75)
+    )
+
+    ax.annotate(
+        xy=(34,109),
+        xytext=(4,0),
+        text=f"Distancia mediana de tiros",
+        textcoords='offset points',
+        fontproperties = font_normal.prop,
+        size=10,
+        color='red',
+        ha='left',
+        va='center',
+        alpha=0.5
+    )
+
+    ax.annotate(
+        xy=(34,116),
+        text=f"{data['playerName'].iloc[0].upper()} - {team_name.upper()}",
+        fontproperties = title.prop,
+        size=12,
+        color='black',
+        ha='center',
+        va='center',
+        weight='bold'
+    )
+    
+    if credit_extra:
+        credit_extra = f" por {credit_extra}, "
+    else:
+        credit_extra = ''
+    
+    ax.annotate(
+        xy=(34,112.5),
+        text=f"Tiros sin contar penales realizados en la {league} {season}\nVisualización{credit_extra}de la líbreria de LanusStats.",
+        fontproperties = font_normal.prop,
+        size=8,
+        color='grey',
+        ha='center',
+        va='center'
+    )
+
+    ax_size = 0.1
+    image_ax = fig.add_axes(
+        [0.75,0.75, ax_size, ax_size],
+        fc='None'
+    )
+    fotmob_url = 'https://images.fotmob.com/image_resources/logo/teamlogo/'
+    club_icon = Image.open(urllib.request.urlopen(f'{fotmob_url}{team_id}.png'))
+    image_ax.imshow(club_icon)
+    image_ax.axis('off')
+    text_length = len(data['playerName'].iloc[0].upper()) + len(team_name.upper())
+    position_adjustment = text_length * 0.0035
+    ax_size = 0.04
+    image_ax_position = [0.36 - position_adjustment, 0.84, ax_size, ax_size]
+    image_ax = fig.add_axes(
+        image_ax_position,
+        fc='None'
+    )
+    fotmob_url = 'https://images.fotmob.com/image_resources/playerimages/'
+    club_icon = Image.open(urllib.request.urlopen(f'{fotmob_url}{player_id}.png'))
+    image_ax.imshow(club_icon)
+    image_ax.axis('off')
+
+    if save_fig:
+        plt.savefig(f"{data['playerName'].iloc[0]} hexbix plot.png", dpi=300, bbox_inches='tight')
+
+def threesixfivescores_match_shotmap(match_url, save_fig=False):
+    """Makes a shotmap with a URL match from 365Scores
+
+    Args:
+        match_url (str): 365Scores match URL. Example: https://www.365scores.com/es-mx/football/match/copa-de-la-liga-profesional-7214/lanus-union-santa-fe-869-7206-7214#id=4033824
+        save_fig (bool, optional): Saves the image to a png. Defaults to False.
+    """
+    
+    shotmap = threesixfivescores.get_match_shotmap(match_url)
+    home_data, away_data = threesixfivescores.get_team_data(match_url)
+    
+    color_local, color_visit = home_data['color'], away_data['color']
+    local, visit = home_data['name'], away_data['name']
+    
+    fig, ax = plt.subplots()
+    pitch = Pitch(
+        pitch_type='opta',
+        goal_type='box'
+    )
+
+    pitch.draw(ax=ax)
+
+    comp1, comp2 = shotmap[(shotmap['competitorNum'] == 1) & (shotmap['shot_outcome'] != 'Gol')], shotmap[(shotmap['competitorNum'] != 1) & (shotmap['shot_outcome'] != 'Gol')]
+    gol_comp_1, gol_comp_2 = shotmap[(shotmap['competitorNum'] == 1) & (shotmap['shot_outcome'] == 'Gol')], shotmap[(shotmap['competitorNum'] != 1) & (shotmap['shot_outcome'] == 'Gol')]
+    
+    #I need to flip the local shots to make them in the other half
+    comp1['side'], comp1['line'] = 100 - comp1['side'], 100 - comp1['line']
+    gol_comp_1['side'], gol_comp_1['line'] = 100 - gol_comp_1['side'], 100 - gol_comp_1['line']
+
+    scatter1 = pitch.scatter(comp1.side, comp1.line, s=comp1.xg*500, c=color_local, alpha = .95, edgecolor='black', ax=ax, label='Disparo')
+    scatter2 = pitch.scatter(comp2.side, comp2.line, s=comp2.xg*500, c=color_visit, alpha = .95, edgecolor='black', ax=ax)
+    scatter3 = pitch.scatter(gol_comp_1.side, gol_comp_1.line, s=gol_comp_1.xg*500, marker='football', ax=ax, label='Gol')
+    scatter4 = pitch.scatter(gol_comp_2.side, gol_comp_2.line, s=gol_comp_2.xg*500, marker='football', ax=ax, label='Gol')
+    handles = []
+    labels = []
+
+    #I made the legend of "Gol" appear only when there is one and if both teams score, only one shows up
+    handles.append(scatter1)
+    labels.append('Disparo')
+    if len(gol_comp_1) > 0:
+        handles.append(scatter3)
+        labels.append('Gol')
+
+    if len(gol_comp_2) > 0 and len(gol_comp_1) == 0:
+        handles.append(scatter4)
+        labels.append('Gol')
+
+    plt.legend(handles, labels, loc='lower center', ncol=2)
+    plt.title(f'Mapa de tiros de {local} vs. {visit}', fontsize=12)
+    
+    if save_fig:
+        plt.savefig(f'Mapa de tiros de {local} vs. {visit}', bbox_inches='tight', dpi=300)
+    
+    
