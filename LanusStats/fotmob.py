@@ -253,5 +253,8 @@ class FotMob:
         season_string = season.replace('/', '%2F')
         response = requests.get(f'https://www.fotmob.com/api/playerStats?playerId={player_id}&seasonId={season_string}-{league_id}', headers=headers)
         time.sleep(3)
-        shotmap = pd.DataFrame(response.json()['shotmap'])
+        try:
+            shotmap = pd.DataFrame(response.json()['shotmap'])
+        except TypeError:
+            raise MatchDoesntHaveInfo(player_id)
         return shotmap

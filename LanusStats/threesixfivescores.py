@@ -149,6 +149,9 @@ class ThreeSixFiveScores:
         except KeyError:
             raise MatchDoesntHaveInfo(match_url)
         df = pd.DataFrame(json_tiros)
+        df['xgot'] = df.xgot.str.replace('-','0')
+        df[['xg', 'xgot']] = df[['xg', 'xgot']].astype(float)
+        df = pd.concat([df, df['outcome'].apply(pd.Series).rename(columns={'name': 'shot_outcome'})],axis=1).drop(columns='outcome')
         return df
     
     def get_players_info(self, match_url):
@@ -169,20 +172,24 @@ class ThreeSixFiveScores:
         values = ['home', 'away']
         names = []
         ids = []
+        colors = []
         match_data = self.get_match_data(match_url)
         for value in values:
-            nombre = match_data[f'{value}Competitor']['name']
+            name = match_data[f'{value}Competitor']['name']
             id = match_data[f'{value}Competitor']['id']
-            names.append(nombre), ids.append(id)
+            color = match_data[f'{value}Competitor']['color']
+            names.append(name), ids.append(id), colors.append(color)
         
         home = {
             'name': names[0],
-            'id': id[0]
+            'id': ids[0],
+            'color': colors[0]
         }
         
         away = {
             'name': names[1],
-            'id': id[1]
+            'id': ids[1],
+            'color': colors[1]
         }
         
         return home, away

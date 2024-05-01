@@ -14,7 +14,7 @@ class InvalidSeasonException(Exception):
 
 class PlayerDoesntHaveInfo(Exception):
     def __init__(self, path):
-        self.message = f"Player in path {path} doesn't have percentiles or similarities in his scouting report, try with another one.\nEl jugador en el path {path} no tiene percentiles o similitudes en su reporte de scouting, pruebe con otro."
+        self.message = f"Player in path {path} doesn't have enough information for this functions, try with another one.\nEl jugador en el path {path} no tiene la información para estas funciones, pruebe con otro."
         super().__init__(self.message)
 
 class MatchDoesntHaveInfo(Exception):
