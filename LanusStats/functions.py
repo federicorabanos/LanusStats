@@ -187,6 +187,7 @@ def get_possible_leagues(league, season, page):
                     "2021": 37231,
                     "2022": 41884,
                     "2023": 47647,
+                    "2024": 57478
                 },
             },
             "Argentina Copa de la Liga Profesional": {
@@ -212,19 +213,20 @@ def get_possible_leagues(league, season, page):
                     "20/21": 27591,
                     "2021": 36166,
                     "2022": 40557,
-                    "2023": 48982
+                    "2023": 48982,
+                    "2024": 58766
                 },
             },
             "Bolivia Division Profesional": {
                 "id": 16736,
                 "seasons": {
-                    "2023": 48353
+                    "2023": 48353, "2024": 58156
                 },
             },
             "Chile Primera Division": {
                 "id": 11653,
                 "seasons": {
-                    "2023": 48017
+                    "2023": 48017, "2024": 57883
                 }
             },
             "Colombia Primera A Apertura": {
@@ -246,7 +248,8 @@ def get_possible_leagues(league, season, page):
                 "id": 240,
                 "seasons": {
                     "2022": 40503,
-                    "2023": 48720
+                    "2023": 48720,
+                    "2024": 58043
                 },
             },
             "Mexico LigaMX Apertura": {
@@ -275,7 +278,7 @@ def get_possible_leagues(league, season, page):
             "Uruguay Primera Division": {
                 "id": 278,
                 "seasons": {
-                    "2023": 48634,
+                    "2023": 48634, "2024": 58264
                 },
             },
             "Venezuela Primera Division": {
@@ -356,7 +359,14 @@ def get_possible_leagues(league, season, page):
                     "2021": 35645, "2022": 40175, "2023": 47968, 
                     "2024": 57297,
                 }
-            }, 
+            },
+            "MLS": {
+                "id": 242,
+                "seasons": {
+                    "2021": 35964, "2022": 40071, "2023": 47955, 
+                    "2024": 57317,
+                }
+            }
         },
         '365Scores': {
             'Argentina Copa de la Liga': {
@@ -391,6 +401,30 @@ def get_possible_leagues(league, season, page):
                     '2023/2024': 20720, '2022/2023': 17664, '2021/2022': 16390, '2020/2021': 15382  
                 }
             },
+            'Bundesliga': {
+                'id': 54,
+                'seasons': {
+                    '2023/2024': 20946, '2022/2023': 17801, '2021/2022': 16494, '2020/2021': 15481  
+                }
+            },
+            'La Liga': {
+                'id': 87,
+                'seasons': {
+                    '2023/2024': 21053, '2022/2023': 17852, '2021/2022': 16520, '2020/2021': 15585
+                }
+            },
+            'Serie A': {
+                'id': 55,
+                'seasons': {
+                    '2023/2024': 20956, '2022/2023': 17866, '2021/2022': 16621, '2020/2021': 15604
+                }
+            },
+            'Ligue 1': {
+                'id': 53,
+                'seasons': {
+                    '2023/2024': 20868, '2022/2023': 17810, '2021/2022': 16499, '2020/2021': 15293
+                }
+            },
             'Argentina Copa de la Liga': {
                 'id': 10007,
                 'seasons': {
@@ -400,13 +434,32 @@ def get_possible_leagues(league, season, page):
             'Argentina Primera Division': {
                 'id': 112,
                 'seasons': {
-                    '2024': 22636, '2023': 19058, '2022': 17301, '2021/2022': 16057, '2020/2021': 15756
+                    '2024': 22635, '2023': 19058, '2022': 17301, '2021/2022': 16057, '2020/2021': 15756
                 }
             },
-            'La Liga': {
-                'id': 87,
+            'Primera Division Colombia': {
+                'id': 274,
                 'seasons': {
-                    '2023/2024': 21053, '2022/2023': 17852, '2021/2022': 16520, '2020/2021': 15585
+                    '2024-Apertura': 22613, '2023-Clausura': "18664-Clausura", '2023-Apertura': "18664-Clausura",
+                    '2022-Clausura': "17283-Clausura", "2022-Apertura": "17283-Apertura"
+                }
+            },
+            'Primera Division Chile': {
+                'id': 273,
+                'seasons': {
+                    '2024': 22749, '2023': 18600, '2022': 17370, "2021": 16185
+                }
+            },
+            'Brasileirao': {
+                'id': 268,
+                'seasons': {
+                    '2024': 22978, '2023': 18982, '2022': 17409, "2021": 16201
+                }
+            },
+            'Primera Division Peru': {
+                'id': 131,
+                'seasons': {
+                    '2024': 22698, '2023': 18625, '2022': 17172, "2021": 16143
                 }
             }
         }
