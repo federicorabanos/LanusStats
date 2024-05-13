@@ -140,7 +140,10 @@ class SofaScore:
         
         data = self.httpclient_request(url)
 
-        points = json.loads(data)['graphPoints']
+        try:
+            points = json.loads(data)['graphPoints']
+        except KeyError:
+            raise MatchDoesntHaveInfo(match_url)
         
         match_momentum = pd.DataFrame(points)
         
@@ -162,8 +165,11 @@ class SofaScore:
         url = f'api/v1/event/{match_id}/shotmap'
         
         data = self.httpclient_request(url)
+        try:
+            shots = json.loads(data)['shotmap']
+        except KeyError:
+            raise MatchDoesntHaveInfo(match_url)
         
-        shots = json.loads(data)['shotmap']
         match_shots = pd.DataFrame(shots)
         today = datetime.now().strftime('%Y-%m-%d')
         if save_csv:
@@ -262,12 +268,16 @@ class SofaScore:
         dataframes = {}
         for team in names.keys():
             data = pd.DataFrame(response[team]['players'])
-            columns_list = [
-                data['player'].apply(pd.Series), data['shirtNumber'], 
-                data['jerseyNumber'], data['position'], data['substitute'], 
-                data['statistics'].apply(pd.Series, dtype=object), 
-                data['captain']
-            ]
+            try:
+                columns_list = [
+                    data['player'].apply(pd.Series), data['shirtNumber'], 
+                    data['jerseyNumber'], data['position'], data['substitute'],
+                    data['statistics'].apply(pd.Series, dtype=object),
+                    data['captain']
+                ]
+            except KeyError:
+                raise MatchDoesntHaveInfo(match_url)
+            
             df = pd.concat(columns_list, axis=1)
             df['team'] = names[team]
             dataframes[team] = df
@@ -286,7 +296,11 @@ class SofaScore:
 
         data = self.get_match_data(match_url)
 
-        home_team = data['event']['homeTeam']['name']
+        try:
+            home_team = data['event']['homeTeam']['name']
+        except KeyError:
+            raise MatchDoesntHaveInfo(match_url)
+        
         away_team = data['event']['awayTeam']['name']
 
         return home_team, away_team
@@ -381,7 +395,10 @@ class SofaScore:
         data = self.httpclient_request(request_url)
         response = json.loads(data)
         
-        heatmap = pd.DataFrame(response['heatmap'])
+        try:
+            heatmap = pd.DataFrame(response['heatmap'])
+        except KeyError:
+            raise MatchDoesntHaveInfo(match_url)
         
         return heatmap
     
@@ -404,6 +421,9 @@ class SofaScore:
         data = self.httpclient_request(request_url)
         response = json.loads(data)
         
-        season_heatmap = pd.DataFrame(response['points'])
+        try:
+            season_heatmap = pd.DataFrame(response['points'])
+        except KeyError:
+            raise PlayerDoesntHaveInfo(player_id)
 
         return season_heatmap
