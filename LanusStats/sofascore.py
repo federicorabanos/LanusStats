@@ -407,4 +407,3 @@ class SofaScore:
         season_heatmap = pd.DataFrame(response['points'])
 
         return season_heatmap
-        

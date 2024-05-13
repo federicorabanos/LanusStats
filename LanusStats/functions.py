@@ -483,4 +483,3 @@ def get_available_season_for_leagues(page, league):
     """
     league_data = get_possible_leagues('Argentina Copa de la Liga', '2023', 'Fotmob')[page][league]
     return league_data
-

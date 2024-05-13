@@ -3,7 +3,7 @@ from setuptools import find_packages, setup
 
 HERE = pathlib.Path(__file__).parent
 
-VERSION = '1.1.0'
+VERSION = '1.5.0'
 PACKAGE_NAME = 'LanusStats'
 AUTHOR = 'Federico Rábanos'
 AUTHOR_EMAIL = 'lanusstats@gmail.com'
@@ -15,7 +15,7 @@ LONG_DESCRIPTION = (HERE / "README.md").read_text(encoding='utf-8')
 LONG_DESC_TYPE = "text/markdown"
 
 INSTALL_REQUIRES = [
-      'pandas', 'mplsoccer', 'requests', 'matplotlib', 'numpy', 'bs4', 'Pillow', 'selenium >= 4.5'
+      'pandas', 'mplsoccer', 'requests', 'matplotlib', 'numpy', 'bs4', 'Pillow'
       ]
 
 setup(
