@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime
 import time
 from .functions import get_possible_leagues_for_page
-from .exceptions import InvalidStrType
+from .exceptions import InvalidStrType, MatchDoesntHaveInfo, PlayerDoesntHaveInfo
 import http.client
 
 class SofaScore:
