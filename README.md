@@ -43,6 +43,13 @@ get_available_season_for_leagues(page, league)
 
 ## [Fbref](https://github.com/federicorabanos/LanusStats/blob/main/LanusStats/fbref.py)
 
+Importo la clase de esta manera:
+```bash
+import LanusStats as ls  
+fbref = ls.Fbref()
+```
+Todas las funciones deben tener el fbref. delante de ellas
+
 * Para scrapear información de los equipos se puede usar ```get_teams_season_stats```. Ejemplo:
 ```bash
 get_teams_season_stats('gca', 'Copa de la Liga', season='2024', save_csv=False, stats_vs=False, change_columns_names=False, add_page_name=False)
@@ -61,7 +68,7 @@ Esto te devuelve dos DataFrames, uno para las estadísticas a favor y otro en co
 
 Para terminar, con ```get_all_teams_season_stats``` podes scrapear TODAS las estadísticas que esten en la pagina. Ejemplo:
 ```bash
-get_all_teams_season_stats('gca', 'Copa de la Liga', save_csv=False, stats_vs=False, change_columns_names=False, add_page_name=False)
+get_all_teams_season_stats('Copa de la Liga', '2024', save_csv=False, stats_vs=False, change_columns_names=False, add_page_name=False)
 ```
 
 * Para scrapear data de los jugadores se pueden usar:
@@ -70,7 +77,7 @@ get_player_season_stats('gca', 'Copa de la Liga', save_csv=False, add_page_name=
 ```
 Y si quiero scrapear todas las estadísticas en una
 ```bash
-get_all_player_season_stats("Copa de la Liga", save_csv=False, add_page_name=False)
+get_all_player_season_stats("Copa de la Liga", "2024", save_csv=False, add_page_name=False)
 ```
 
 * Del perfil de un jugar se puede sacar los percentiles y las similutdes (si las tiene)

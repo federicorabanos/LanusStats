@@ -1,4 +1,5 @@
 from .exceptions import *
+import numpy as np
 
 def get_possible_leagues(league, season, page):
     """Dictionary with all the possible pages, leagues and season for the scraper.
@@ -536,3 +537,12 @@ def get_available_season_for_leagues(page, league):
     """
     league_data = get_possible_leagues('Argentina Copa de la Liga', '2023', 'Fotmob')[page][league]
     return league_data
+
+def semicircle(r, h, k):
+    x0 = h - r  # determine x start
+    x1 = h + r  # determine x finish
+    x = np.linspace(x0, x1, 10000)  # many points to solve for y
+
+    # use numpy for array solving of the semicircle equation
+    y = k - np.sqrt(r**2 - (x - h)**2)  
+    return x, y
