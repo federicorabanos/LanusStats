@@ -5,9 +5,6 @@ from bs4 import BeautifulSoup, Comment
 import pandas as pd
 from datetime import datetime
 import time
-from mplsoccer import PyPizza, add_image, FontManager
-import matplotlib.pyplot as plt
-from PIL import Image
 import numpy as np
 from .functions import get_possible_leagues_for_page, possible_stats_exception
 from .exceptions import PlayerDoesntHaveInfo, MatchDoesntHaveInfo
