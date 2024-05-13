@@ -166,6 +166,27 @@ def get_possible_leagues(league, season, page):
                 'seasons': {
                     '2023-2024', '2022-2023', '2021-2022', '2020-2021'
                 }
+            },
+            'Danish Superliga': {
+                'id': 50,
+                'slug': 'Superliga',
+                'seasons': {
+                    '2023-2024', '2022-2023', '2021-2022', '2020-2021'
+                }
+            },
+            'Eredivise': {
+                'id': 23,
+                'slug': 'Eredivise',
+                'seasons': {
+                    '2023-2024', '2022-2023', '2021-2022', '2020-2021'
+                }
+            },
+            'Primeira Liga Portugal': {
+                'id': 32,
+                'slug': 'Primeira-Liga',
+                'seasons': {
+                    '2023-2024', '2022-2023', '2021-2022', '2020-2021'
+                }
             }
         },
         'Sofascore': { #https://github.com/oseymour/ScraperFC/ some of the leagues ids were taken from here
