@@ -5,9 +5,6 @@ from bs4 import BeautifulSoup, Comment
 import pandas as pd
 from datetime import datetime
 import time
-from mplsoccer import PyPizza, add_image, FontManager
-import matplotlib.pyplot as plt
-from PIL import Image
 import numpy as np
 from .functions import get_possible_leagues_for_page, possible_stats_exception
 from .exceptions import PlayerDoesntHaveInfo, MatchDoesntHaveInfo
@@ -191,18 +188,24 @@ class Fbref:
         """
         response = requests.get(path)
         soup = BeautifulSoup(response.content, "html.parser")
-        comment = soup.find_all(text=lambda t: isinstance(t, Comment))
-        comment_number=0
-        for i in range(len(comment)):
-            if comment[i].find('\n\n<div class="table_container"') != -1:
-                comment_number = i
-        comment_table = comment[comment_number]
-        table = comment_table.find('table')
-        table_html = BeautifulSoup(comment_table[table:], 'html.parser')
-        table = self.get_table(table_html)
         data = []
         headings=[]
-        headtext = table_html.find_all("th",scope="col")
+        
+        if league != 'Big 5 European Leagues':
+            comment = soup.find_all(text=lambda t: isinstance(t, Comment))
+            comment_number=0
+            for i in range(len(comment)):
+                if comment[i].find('\n\n<div class="table_container"') != -1:
+                    comment_number = i
+            comment_table = comment[comment_number]
+            table = comment_table.find('table')
+            table_html = BeautifulSoup(comment_table[table:], 'html.parser')
+            table = self.get_table(table_html)
+            headtext = table_html.find_all("th",scope="col")
+        else:
+            table = self.get_table(soup)
+            headtext = soup.find_all("th",scope="col")
+        
         for i in range(len(headtext)):
             heading = headtext[i].get_text()
             headings.append(heading)
@@ -220,7 +223,8 @@ class Fbref:
         df_data = df_data.rename(columns=df_data.iloc[0])
         df_data = df_data.reindex(df_data.index.drop(0))
         df_data = df_data.replace('',0).drop(columns=['Matches'])
-        df_data.insert(4, 'Comp', [league]*len(df_data))
+        if league != 'Big 5 European Leagues':
+            df_data.insert(4, 'Comp', [league]*len(df_data))
         df_data = df_data.dropna().reset_index(drop=True)
 
 
