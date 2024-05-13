@@ -1,12 +1,4 @@
 from .exceptions import *
-from exceptions import *
-from IPython.display import clear_output
-import pandas as pd
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-import random
-import numpy as np
-import undetected_chromedriver as uc
 
 def get_possible_leagues(league, season, page):
     """Dictionary with all the possible pages, leagues and season for the scraper.
@@ -492,38 +484,3 @@ def get_available_season_for_leagues(page, league):
     league_data = get_possible_leagues('Argentina Copa de la Liga', '2023', 'Fotmob')[page][league]
     return league_data
 
-def get_proxy():
-    ''' Gets a proxy address.
-
-    Code used by Owen Seymour in ScraperFC, here:
-    https://github.com/oseymour/ScraperFC/blob/main/ScraperFC/shared_functions.py#L628 
-    
-    Returns
-    -------
-    proxy : str
-        In the form <IP address>:<port>
-    '''
-    options = Options()
-    options.add_argument('--headless')
-    driver = uc.Chrome(headless=True,use_subprocess=False,option=options)
-    clear_output()
-    
-    try:
-        driver.get('https://sslproxies.org/')
-        table = driver.find_elements(By.TAG_NAME, 'table')[0]
-        df = pd.read_html(table.get_attribute('outerHTML'))[0]
-        df = df.iloc[np.where(~np.isnan(df['Port']))[0],:] # ignore nans
-
-        ips = df['IP Address'].values
-        ports = df['Port'].astype('int').values
-
-        driver.quit()
-        proxies = list()
-        for i in range(len(ips)):
-            proxies.append('{}:{}'.format(ips[i], ports[i]))
-        i = random.randint(0, len(proxies)-1)
-        return proxies[i]
-    except Exception as e:
-        driver.close()
-        driver.quit()
-        raise e
