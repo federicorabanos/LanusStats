@@ -98,6 +98,10 @@ get_tournament_table("https://fbref.com/en/comps/9/Premier-League-Stats")
 ```
 
 ## [FotMob](https://github.com/federicorabanos/LanusStats/blob/main/LanusStats/fotmob.py)
+```bash
+import LanusStats as ls  
+fotmob = ls.FotMob()
+```
 
 * Para obtener las distintas tablas que pueden haber en la UI de Fotmob ([ejemplo](https://www.fotmob.com/es/leagues/47/table/premier-league)) pueden usar:
 
@@ -142,10 +146,65 @@ get_player_shotmap("Premier League", "2023/2024", 1203665)
 El 3º parametro es el id que se encuentra en la url, ejemplo: https://www.fotmob.com/es/players/1203665/alejandro-garnacho
 
 ## [365 Scores](https://github.com/federicorabanos/LanusStats/blob/main/LanusStats/threesixfivescores.py)
+```bash
+import LanusStats as ls  
+threesixfivescores = ls.ThreeSixFiveScores()
+```
 
-## SofaScore
+## [SofaScore](https://github.com/federicorabanos/LanusStats/blob/main/LanusStats/sofascore.py)
+```bash
+import LanusStats as ls  
+sofascore = ls.SofaScore()
+```
 
-Por el momento no está disponible el scraper de SofaScore
+* De un partido ([ejemplo](https://www.sofascore.com/arsenal-manchester-united/KR#id:11352532)) podes sacar los disparos:
+
+```bash
+get_match_shotmap("https://www.sofascore.com/arsenal-manchester-united/KR#id:11352532", save_csv=True)
+```
+**match_url** se pone la url entera de la página del partido de Sofascore.  
+**save_csv** si guardas el dataframe que te devuelve en un csv
+
+* También de un partido podes sacar las estadísticas de los jugadores:
+```bash
+get_players_match_stats("https://www.sofascore.com/arsenal-manchester-united/KR#id:11352532")
+```
+**match_url** se pone la url entera de la página del partido de Sofascore.  
+Aclaración, te devuelve una lista de dataframes, el primero (ó [0]) es del local y el segundo ó [1] es del visitante  
+
+* También de un partido podes sacar las posiciones promedio:
+```bash
+get_players_average_positions("https://www.sofascore.com/arsenal-manchester-united/KR#id:11352532")
+```
+**match_url** se pone la url entera de la página del partido de Sofascore.  
+Aclaración, te devuelve una lista de dataframes, el primero (ó [0]) es del local y el segundo ó [1] es del visitante  
+
+* También podes obtener la información de los lineups:
+```bash
+get_lineups("https://www.sofascore.com/arsenal-manchester-united/KR#id:11352532")
+```
+
+* Por último dentro de un partido podes sacar el mapa de calor de cada uno dentro del partido:
+```bash
+get_player_heatmap("https://www.sofascore.com/arsenal-manchester-united/KR#id:11352532", "Alejandro Garnacho")
+```
+Aclaración: el nombre del jugador debe ser tal cual lo muestra SofaScore.
+
+* Se puede sacar el mapa de calor de un jugador de cada torneo, si es que lo tiene:
+```bash
+get_player_season_heatmap("Argentina Liga Profesional", "2024", 832213)
+```
+La liga y la temporada salen de las funciones generales ya vistas y el tercer parámetro es el id del jugador que se puede ver en la página de jugador: https://www.sofascore.com/player/joaquin-pereyra/832213. Es el número al final del link
+
+* Por último, se pueden scrapear las estadísticas de los jugadores en un [torneo](https://www.sofascore.com/tournament/football/argentina/liga-profesional-de-futbol/155#id:57478):
+```bash
+scrape_league_stats(league="Argentina Liga Profesional", season="2024", save_csv=False, accumulation="per90", selected_positions= ["Goalkeepers"])
+```
+**league** Liga habilitada en get_available_leagues("Sofascore")
+**season** Temporada habilitada en get_available_season_for_leagues("Sofascore", league)
+**save_csv** si guardar el dataframe en un csv o no
+**accumulation** como pedir las estadísticas. Valores posibles: total, per90, perMatch
+**selected_positions** que grupo de jugadores traer. Valores posibles: ['Goalkeepers', 'Defenders', 'Midfielders', 'Forwards']
 
 ## [Visualizaciones](https://github.com/federicorabanos/LanusStats/blob/main/LanusStats/visualizations.py)
 
@@ -154,7 +213,7 @@ Hay visualizaciones seteadas para hacer desde una función que scrapean usando l
 * Plotear percentiles de los jugadores de Fbref en un grafico de MPLSoccer
 
 ```bash
-fbref_plot_player_percentiles(path="https://fbref.com/en/players/058c938c/Marcelino-Moreno", image=None, chart_stats = ["shots", "passes", "defense"], save_image=True, name_extra = "- Lanus", credit_extra= "")
+ls.visualizations.fbref_plot_player_percentiles(path="https://fbref.com/en/players/058c938c/Marcelino-Moreno", image=None, chart_stats = ["shots", "passes", "defense"], save_image=True, name_extra = "- Lanus", credit_extra= "")
 ```
 
 **path** Link del jugador en Fbref  
@@ -170,11 +229,25 @@ Ejemplo: ![Marcelino Moreno fbref percentile plot](https://github.com/federicora
 * Plotear match momentum de FotMob
 
 ```bash
-fotmob_match_momentum_plot(match_id=4193851, save_fig=False)
+ls.visualizations.fotmob_match_momentum_plot(match_id=4193851, save_fig=False)
 ```
 
 **match_id** es el que se encuentra en la url, ejemplo: https://www.fotmob.com/es/matches/afc-bournemouth-vs-manchester-united/2yrx85#4193851  
 **save_fig** si guardo la imagen o no
+
+* Plotear hexbins de tiros de jugadores de FotMob
+```bash
+ls.visualizations.fotmob_hexbin_shotmap('La Liga', '2023/2024', 711231)
+```
+**league** Liga habilitada en get_available_leagues("Fotmob")  
+**season** Temporada habilitada.  
+**player_id** Id del jugador de FotMob. Ejemplo: https://www.fotmob.com/es/players/711231/gorka-guruzeta el número de la url es el id del jugador.
+
+* Plotear un mapa de disparos de un partido de 365Scores
+```bash
+ls.visualizations.threesixfivescores_match_shotmap('https://www.365scores.com/es-mx/football/match/copa-sudamericana-389/lanus-metropolitanos-fc-869-13830-389#id=4072240')
+```
+Hay que poner la url del partido entera. Va a devolver info si es que tiene un mapa de tiros el partido.
 
 ---
 
