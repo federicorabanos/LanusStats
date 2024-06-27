@@ -39,7 +39,7 @@ class Fbref:
     def player_info_exception(self, path):
         data = self.get_all_dfs(path)
         first_df = data[0]
-        if first_df.columns[0] not in ['Statistic', 'Estadísticas']:
+        if first_df.columns[0] not in ['Statistic', 'Estadísticas'] and first_df.columns.dtype != 'O':
             raise PlayerDoesntHaveInfo('path')
     
     def get_teams_season_stats(self, stat, league, season=None, save_csv=False, stats_vs=False, change_columns_names=False, add_page_name=False):

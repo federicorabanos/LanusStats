@@ -187,6 +187,20 @@ def get_possible_leagues(league, season, page):
                 'seasons': {
                     '2023-2024', '2022-2023', '2021-2022', '2020-2021'
                 }
+            },
+            'Copa America': {
+                'id': 685,
+                'slug': 'Copa-America',
+                'season': {
+                    '2024', '2021', '2019'
+                }
+            },
+            'Euros': {
+                'id': 676,
+                'slug': 'European-Championship',
+                'seasons': {
+                    '2024', '2021', '2016'
+                }
             }
         },
         'Sofascore': { #https://github.com/oseymour/ScraperFC/ some of the leagues ids were taken from here
@@ -321,6 +335,19 @@ def get_possible_leagues(league, season, page):
                     "2018": 15586, "2022": 41087,
                 },
             },
+            "Euros": {
+                "id": 1,
+                "seasons": {
+                    "2024": 56953, "2021": 26542, "2016": 11098, "2012": 4136, "2008": 1162,
+                    "2004": 356, "2000": 358
+                }
+            },
+            "Copa America": {
+                "id": 133,
+                "seasons": {
+                    "2024": 57114, "2021": 26681, "2019": 22352, "2016": 11115
+                }
+            },
             "Premier League": {
                 "id": 17,
                 "seasons": {
@@ -414,6 +441,14 @@ def get_possible_leagues(league, season, page):
             'Primera Division Colombia': {
                 'id': 620,
                 'seasons': None
+            },
+            'Copa America': {
+                'id': 595,
+                'seasons': None
+            },
+            'Euros': {
+                'id': 6316,
+                'seasons': None
             }
         },
         'Fotmob': {
@@ -482,6 +517,18 @@ def get_possible_leagues(league, season, page):
                 'id': 131,
                 'seasons': {
                     '2024': 22698, '2023': 18625, '2022': 17172, "2021": 16143
+                }
+            },
+            'Copa America': {
+                'id': 44,
+                'seasons': {
+                    '2024': 22518, '2021': 15148, '2019': 13572
+                }
+            },
+            'Euros': {
+                'id': 50,
+                'seasons': {
+                    '2024': 18307, '2021': 12715, '2016': 8479
                 }
             }
         }
