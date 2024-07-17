@@ -3,9 +3,9 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import numpy as np
 import time
-from config import headers as request_headers
-from functions import get_possible_leagues
-from exceptions import PlayerDoesntHaveInfo
+from .config import headers as request_headers
+from .functions import get_possible_leagues
+from .exceptions import PlayerDoesntHaveInfo
 
 
 class Transfermarkt:
