@@ -4,15 +4,18 @@ import urllib
 import numpy as np
 from mplsoccer import PyPizza, add_image, FontManager, VerticalPitch, Pitch
 from PIL import Image
+from urllib.request import urlopen
 from matplotlib.patches import RegularPolygon
 import matplotlib.patheffects as path_effects
+from matplotlib.offsetbox import (OffsetImage,AnnotationBbox)
 from .exceptions import MatchDoesntHaveInfo
 from .fbref import Fbref
 from .fotmob import FotMob
 from .functions import semicircle
 from .config import soc_cm
 from .threesixfivescores import ThreeSixFiveScores
-fbref, fotmob, threesixfivescores = Fbref(), FotMob(), ThreeSixFiveScores()
+from .transfermarkt import Transfermarkt
+fbref, fotmob, threesixfivescores, transfermarkt = Fbref(), FotMob(), ThreeSixFiveScores(), Transfermarkt()
 
 #Fonts
 font_normal = FontManager('https://raw.githubusercontent.com/googlefonts/roboto/main/'
@@ -404,4 +407,34 @@ def threesixfivescores_match_shotmap(match_url, save_fig=False):
     if save_fig:
         plt.savefig(f'Mapa de tiros de {local} vs. {visit}', bbox_inches='tight', dpi=300)
     
-    
+def transfermarkt_player_market_value(transfermarkt_player_id, save_fig=False, plot_age=False):
+    values = transfermarkt.get_player_market_value(transfermarkt_player_id)
+    values['y'] = values['y'] / 1000000
+    x = pd.to_datetime(values.datum_mw, format='%d/%m/%Y')
+    y = values.y
+
+    images = list(values['wappen'])
+    fig, ax = plt.subplots(figsize = (20,12))
+    ax.plot(x,y, ls=':', lw=2, color='black')
+
+    for x0, y0, file in zip(x, y, images):
+        ab = AnnotationBbox(OffsetImage(Image.open(urlopen(file))), (x0, y0), frameon=False)
+        ax.add_artist(ab)
+
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    for axis in ['top','bottom','left','right']:
+        ax.spines[axis].set_linewidth(1.5)
+    values_describe = values['y'].describe()
+    if plot_age:
+        for i, txt in enumerate(values['age']):
+            ax.annotate(f'Edad: {txt}', (x[i], y[i]+((values_describe['max'] - values_describe['min']) / 17.5)), ha='center', size=15)
+        
+    plt.xticks(size=15)
+    plt.yticks(size=15)
+    ax.set_ylim(values_describe['min']-6, values_describe['max']+(values_describe['max']*.1))
+    plt.ylabel('Valor en Millones de Euros', size=15)
+    player_name = values['player'].unique()[0]
+    plt.title(f'Valor de mercado de {player_name} a lo largo de su carrera. Fuente: Transfermarkt', size=20, pad=25)
+    if save_fig:
+        plt.savefig(f'{player_name} market value.png', bbox_inches='tight', dpi=300)
