@@ -206,6 +206,60 @@ scrape_league_stats(league="Argentina Liga Profesional", season="2024", save_csv
 **accumulation** como pedir las estadísticas. Valores posibles: total, per90, perMatch
 **selected_positions** que grupo de jugadores traer. Valores posibles: ['Goalkeepers', 'Defenders', 'Midfielders', 'Forwards']
 
+## [Transfermarkt](https://github.com/federicorabanos/LanusStats/blob/main/LanusStats/transfermarkt.py)
+
+```bash
+import LanusStats as ls  
+transfermarkt = ls.Transfermarkt()
+```
+
+* Información de la valuación de los planteles (general):
+```bash
+get_league_teams_valuations(league="Primera Division Argentina", season="2024")
+```
+**league (str)**: Liga que este en get_possible_leagues_for_page("Transfermarkt")  
+**season(str)**: Cualquier temporada que este en la interfaz de Transfermarkt (por ejemplo: 2024, 2023/2024)  
+
+* Información de los planteles en particular
+```bash
+scrape_players_for_teams(team_name="Club Atletico Lanus", team_id="333", season="2024")
+```
+Ejemplo: https://www.transfermarkt.com.ar/club-atletico-lanus/startseite/verein/333  
+**team_name (str)** Nombre respetando la URL (Club Atletico Lanus). No poner guiones medios.  
+**team_id (str)** ID que está al final de la URL (333)
+**season(str)**: Cualquier temporada que este en la interfaz de Transfermarkt (por ejemplo: 2024, 2023/2024)  
+
+* Información de jugadores (ejemplo de URL: https://www.transfermarkt.com.ar/marcelino-moreno/profil/spieler/456617). Transferencias, posiciones jugadas, partidos jugadores, valoraciones, etc.:
+```bash
+get_player_transfer_history(player_id="456617")
+```
+**player_id (str)** ID del jugador, se saca de la URL.  
+
+```bash
+get_player_market_value(player_id="456617")
+```
+**player_id (str)** ID del jugador, se saca de la URL.  
+
+```bash
+get_player_positions_played(player_name="Marcelino Moreno", player_id="456617")
+```
+**player_name (str)** Nombre del jugador.  
+**player_id (str)** ID del jugador, se saca de la URL.  
+
+```bash
+get_keepers_penalty_data(player_name="Emiliano Martinez", player_id="111873")
+```
+**player_name (str)** Nombre del jugador (arquero).  
+**player_id (str)** ID del jugador, se saca de la URL.  
+
+
+```bash
+get_player_played_data(player_name="Emiliano Martinez", player_id="111873")
+```
+**player_name (str)** Nombre del jugador.  
+**player_id (str)** ID del jugador, se saca de la URL.  
+
+
 ## [Visualizaciones](https://github.com/federicorabanos/LanusStats/blob/main/LanusStats/visualizations.py)
 
 Hay visualizaciones seteadas para hacer desde una función que scrapean usando las funciones de la libreria y visualizan la información de cierta manera para que se puede customizar o usar derecho.
@@ -248,6 +302,11 @@ ls.visualizations.fotmob_hexbin_shotmap('La Liga', '2023/2024', 711231)
 ls.visualizations.threesixfivescores_match_shotmap('https://www.365scores.com/es-mx/football/match/copa-sudamericana-389/lanus-metropolitanos-fc-869-13830-389#id=4072240')
 ```
 Hay que poner la url del partido entera. Va a devolver info si es que tiene un mapa de tiros el partido.
+
+* Plotear valor de mercado según Transfermarkt a lo largo de la carrera:
+```bash
+ls.visualizations.transfermarkt_player_market_value(player_id='111873')
+```
 
 ---
 
