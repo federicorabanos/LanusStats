@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
+import matplotlib as mpl
 
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
@@ -27,7 +28,7 @@ colors_bordo_to_white = [
 colors_bordo_to_white.reverse()
 
 granate_blanco_cmap = LinearSegmentedColormap.from_list('bordo_to_white', colors_bordo_to_white, N=50)
-plt.register_cmap(name='granate_blanco', cmap=granate_blanco_cmap)
+mpl.colormaps.register(name='granate_blanco', cmap=granate_blanco_cmap)
 
 colors = [
     '#d0d6d4',
@@ -49,4 +50,4 @@ colors = [
     '#287271',
 ]
 soc_cm = LinearSegmentedColormap.from_list('colors', colors, N=50)
-plt.register_cmap(name='SOC', cmap=soc_cm)
+mpl.colormaps.register(name='SOC', cmap=soc_cm)
