@@ -320,6 +320,13 @@ def get_possible_leagues(league, season, page):
                 'seasons': {
                     '2024', '2023', '2022', '2021', '2020', '2019', '2018'
                 }
+            },
+            'Liga MX': {
+                'id': 31,
+                'slug': 'Liga-MX',
+                'seasons': {
+                    '2024/2025', '2023/2024', '2022/2023', '2021/2022', '2020/2021', '2019/2020', '2018/2019'
+                }
             }
         },
         'Sofascore': { #https://github.com/oseymour/ScraperFC/ some of the leagues ids were taken from here

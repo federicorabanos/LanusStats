@@ -21,6 +21,7 @@ La libreria consta de distintos módulos para sacar información de estas págin
 * [FotMob](https://www.fotmob.com/es)
 * [SofaScore](https://sofascore.com/)
 * [365Scores](https://www.365scores.com/es-mx/football)
+* [Transfermarkt](https://transfermarkt.com.ar/)
 
 ---
 
@@ -141,9 +142,12 @@ Aclaración: El id de parametro es el que se encuentra en la url, ejemplo: https
 
 ** Mapa de tiros ([ejemplo](https://www.fotmob.com/es/players/1203665/alejandro-garnacho)):
 ```bash
-get_player_shotmap("Premier League", "2023/2024", 1203665)
+get_player_shotmap("1", "0", 1203665)
 ```
-El 3º parametro es el id que se encuentra en la url, ejemplo: https://www.fotmob.com/es/players/1203665/alejandro-garnacho
+El 3º parametro es el id que se encuentra en la url, ejemplo: https://www.fotmob.com/es/players/1203665/alejandro-garnacho  
+El primer y segundo parametro salen del dropdown de la página de FotMob:
+- El primero es la posición de la temporada en el dropdown, arrancando desde el 0. Es decir, si quiero de la primera temporada que aparece en el dropdown, el valor será 0, si es de la 2º, será 1 y así sucesivamente.  
+- El segundo es la posición de la competición dentro de una temporada. La que aparezca primera será 0 y asi.
 
 ## [365 Scores](https://github.com/federicorabanos/LanusStats/blob/main/LanusStats/threesixfivescores.py)
 ```bash
