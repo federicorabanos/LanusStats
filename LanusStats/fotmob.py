@@ -235,12 +235,12 @@ class FotMob:
                 .dropna(subset=['home', 'away'])
         return total_df
     
-    def get_player_shotmap(self, league, season, player_id):
+    def get_player_shotmap(self, season_index, competition_index, player_id):
         """Scrape a player shotmap from a certain league and season, if they have one.
 
         Args:
-            league (str): Possible leagues in get_available_leagues("Fotmob")
-            season (str): Possible saeson in get_available_season_for_leagues("Fotmob", league)
+            season_index (str): Position of the season in the dropdown on FotMob UI
+            competition_index (str): Position of the competition in a season in the dropdown on FotMob UI
             player_id (str): FotMob Id of a player. Could be found in the URL of a specific player.
                              Example: https://www.fotmob.com/es/players/727095/ignacio-ramirez
                              727095 is the player_id.
@@ -248,10 +248,7 @@ class FotMob:
         Returns:
             shotmap: DataFrame with the data for all the shots shown in the FotMob UI.
         """
-        leagues = get_possible_leagues_for_page(league, season, 'Fotmob')
-        league_id = leagues[league]['id']
-        season_string = season.replace('/', '%2F')
-        response = requests.get(f'https://www.fotmob.com/api/playerStats?playerId={player_id}&seasonId={season_string}-{league_id}', headers=headers)
+        response = requests.get(f'https://www.fotmob.com/api/playerStats?playerId={player_id}&seasonId={season_index}-{competition_index}&isFirstSeason=false', headers=headers)
         time.sleep(3)
         try:
             shotmap = pd.DataFrame(response.json()['shotmap'])
