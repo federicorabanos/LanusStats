@@ -10,7 +10,7 @@ Para instalarla, solamente tenes que correr esto en algun consola de comando:
 ```bash
 pip install LanusStats
 ```
-En caso de querer actualizarla a la versión más reciente:
+En caso de querer actualizarla a la versión más readasdasdciente:
 ```bash
 pip install --upgrade LanusStats
 ```
