@@ -1,3 +1,5 @@
+#With great help and a lot of the credit to https://github.com/valensantarone (Valko)
+
 import requests
 import pandas as pd
 import numpy as np
