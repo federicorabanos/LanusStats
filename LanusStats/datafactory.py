@@ -126,4 +126,3 @@ class DataFactory:
         df = self.add_home_away_columns(data, df)
 
         return df
-    
