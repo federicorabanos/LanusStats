@@ -697,6 +697,72 @@ def get_possible_leagues(league, season, page):
                 "id": "BRA1",
                 "seasons": None
             },
+        },
+        "DataFactory": {
+            "Primera Division Argentina": {
+                "slug": "primeraa",
+                "seasons": None
+            },
+            "Copa de la Liga Argetina": {
+                "slug": "copalpf",
+                "seasons": None
+            },
+            "Bundesliga": {
+                "slug": "alemania",
+                "seasons": None
+            },
+            "Primera Division Chile": {
+                "slug": "chile",
+                "seasons": None
+            },
+            "Copa Libertadores": {
+                "slug": "libertadores",
+                "seasons": None
+            },
+            "Copa Sudamericana": {
+                "slug": "sudamericana",
+                "seasons": None
+            },
+            "Eliminatorias Sudamericanas": {
+                "slug": "copalpf",
+                "seasons": None
+            },
+            "La Liga": {
+                "slug": "espana",
+                "seasons": None
+            },
+            "Ligue 1": {
+                "slug": "francia",
+                "seasons": None
+            },
+            "Premier League": {
+                "slug": "premierleague",
+                "seasons": None
+            },
+            "Serie A": {
+                "slug": "italia",
+                "seasons": None
+            },
+            "Mundial": {
+                "slug": "mundial",
+                "seasons": None
+            },
+            "Primera Division Paraguay": {
+                "slug": "paraguay",
+                "seasons": None
+            },
+            "Champions League": {
+                "slug": "champions",
+                "seasons": None
+            },
+            "Champions League": {
+                "slug": "champions",
+                "seasons": None
+            },
+            "Primera Division Uruguay": {
+                "slug": "uruguay",
+                "seasons": None
+            }
         }
     }
     
@@ -709,7 +775,7 @@ def get_possible_leagues(league, season, page):
     possible_leagues_list = list(possible_leagues[page].keys())
     if league not in possible_leagues_list:
         raise InvalidLeagueException('league', possible_leagues_list)
-    if page not in ['Transfermarkt']:
+    if page not in ['Transfermarkt', '365Scores', 'DataFactory']:
         possible_seasons_list = list(possible_leagues[page][league]['seasons'])
         if season != None and season not in possible_seasons_list:
             raise InvalidSeasonException('league', possible_seasons_list)
