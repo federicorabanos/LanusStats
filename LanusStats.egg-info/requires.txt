@@ -1,0 +1,7 @@
+pandas
+mplsoccer
+requests
+matplotlib
+numpy
+bs4
+Pillow
