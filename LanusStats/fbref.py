@@ -233,21 +233,31 @@ class Fbref:
                 df_data.columns = new_columns
 
         if save_csv:
-              df_data.to_csv(f'{league} - {stat} - {today}.csv')
+              df_data.to_csv(f'{league} - {season} - {stat} - {today}.csv')
         
         return df_data
 
-    def get_all_player_season_stats(self, league, season, save_csv=False):
+    def get_all_player_season_stats(self, league, season, save_csv=False, validation_merge='weak'):
         """Gets a table of ALL the stats in a players page.
 
         Args:
             league (str): Possible leagues in get_available_leagues("Fbref")
             save_csv (bool, optional): If true, it saves the tables as a csv. Defaults to False.
+            validation_merge (str, optional): Determines the merge strategy to handle cases of players with identical names.
+            - 'weak': Merges on "Player" only, which may cause conflicts if multiple players share the same name in the league, but is faster.
+            - 'strong': Merges on "Player", "Squad", and "Position" to differentiate between players with identical names, 
+              even if they play on the same team.
+
 
         Returns:
             data: DataFrame with all the stats of players
             gk_data: DataFrame with all the stats relevant to goalkeepers
         """
+
+        # Validación del argumento `validation_merge`
+        if validation_merge not in ['weak', 'strong']:
+            raise ValueError(f"validation_merge debe ser 'weak' o 'strong', pero se recibió '{validation_merge}'.")
+
         
         today = datetime.now().strftime('%Y-%m-%d')
         data = pd.DataFrame()
@@ -265,7 +275,15 @@ class Fbref:
                 if len(data) == 0:
                     data = pd.concat([data, placeholder], axis=1)
                 else:
-                    data = data.merge(placeholder, on='Player', how='left')
+                    merge_list = ['Player']
+                    if validation_merge=='weak':
+                        data = data.merge(placeholder, on=merge_list, how='left')
+                    elif validation_merge=='strong':
+                        placeholder['stats_Squad'] = placeholder[f'{stat}_Squad'] 
+                        placeholder['stats_Pos'] = placeholder[f'{stat}_Pos'] 
+                        merge_list += ['stats_Squad', 'stats_Pos']
+                        data = data.merge(placeholder, on=merge_list, how='left')
+                    
         
         if save_csv:
               data.to_csv(f'{league} - {stat} - player stats - {today}.csv')
