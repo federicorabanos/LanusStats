@@ -1,7 +1,5 @@
 import requests
 import pandas as pd
-import json
-import matplotlib.pyplot as plt
 import time
 from .functions import get_possible_leagues_for_page
 from .exceptions import InvalidStat, MatchDoesntHaveInfo
@@ -72,6 +70,21 @@ class FotMob:
             'total_yel_card_team',
             'total_red_card_team'
         ]
+
+    def fotmob_request(self, path):
+        """Code by probberechts: https://github.com/probberechts/soccerdata/pull/745"""
+
+        try:
+            r = requests.get("http://46.101.91.154:6006/", headers=headers)
+        except requests.exceptions.ConnectionError:
+            raise ConnectionError("Unable to connect to the session cookie server.\nNo se pudo conectar a la sesión de las cookies del server.")
+
+        token = r.json()
+        headers_with_token = headers | token
+        response = requests.get(f'https://www.fotmob.com/api/{path}', headers=headers_with_token)
+        time.sleep(3)
+        return response
+
         
     def get_season_tables(self, league, season, table = ['all', 'home', 'away', 'form', 'xg']):
         """Get standing tables from a list of possible ones from a certain season in a league.
@@ -87,8 +100,8 @@ class FotMob:
         leagues = get_possible_leagues_for_page(league, season, 'Fotmob')
         league_id = leagues[league]['id']
         season_string = season.replace('/', '%2F')
-        response = requests.get(f'https://www.fotmob.com/api/leagues?id={league_id}&ccode3=ARG&season={season_string}', headers=headers)
-        time.sleep(3)
+        path = f'leagues?id={league_id}&ccode3=ARG&season={season_string}'
+        response = self.fotmob_request(path)
         try:
             tables = response.json()['table'][0]['data']['table']
             table = tables[table]
@@ -108,8 +121,8 @@ class FotMob:
         Returns:
             response: json with the response.
         """
-        response = requests.get(f'https://www.fotmob.com/api/matchDetails?matchId={match_id}', headers=headers)
-        time.sleep(3)
+        path = f'matchDetails?matchId={match_id}'
+        response = self.fotmob_request(path)
         return response
     
     def get_players_stats_season(self, league, season, stat):
@@ -132,8 +145,8 @@ class FotMob:
         leagues = get_possible_leagues_for_page(league, season, 'Fotmob')
         league_id = leagues[league]['id']
         season_id = leagues[league]['seasons'][season]
-        response = requests.get(f'https://www.fotmob.com/api/leagueseasondeepstats?id={league_id}&season={season_id}&type=players&stat={stat}', headers=headers)
-        time.sleep(3)
+        path = f'leagueseasondeepstats?id={league_id}&season={season_id}&type=players&stat={stat}'
+        response = self.fotmob_request(path)
         df_1 = pd.DataFrame(response.json()['statsData'])
         df_2 = pd.DataFrame(response.json()['statsData']).statValue.apply(pd.Series)
         df = pd.concat([df_1, df_2], axis=1)
@@ -159,8 +172,8 @@ class FotMob:
         leagues = get_possible_leagues_for_page(league, season, 'Fotmob')
         league_id = leagues[league]['id']
         season_id = leagues[league]['seasons'][season]
-        response = requests.get(f'https://www.fotmob.com/api/leagueseasondeepstats?id={league_id}&season={season_id}&type=teams&stat={stat}', headers=headers)
-        time.sleep(3)
+        path = f'leagueseasondeepstats?id={league_id}&season={season_id}&type=teams&stat={stat}'
+        response = self.fotmob_request(path)
         df_1 = pd.DataFrame(response.json()['statsData'])
         df_2 = pd.DataFrame(response.json()['statsData']).statValue.apply(pd.Series)
         df = pd.concat([df_1, df_2], axis=1)
@@ -230,7 +243,9 @@ class FotMob:
         for i in range(len(stats_df)):
             df = pd.DataFrame(stats_df[i]['stats'])
             total_df = pd.concat([df, total_df])
-        total_df = pd.concat([total_df, total_df.stats.apply(pd.Series).rename(columns={0: 'home', 1: 'away'})], axis=1) \
+        total_df = pd.concat([total_df, total_df.stats
+                              .apply(pd.Series)
+                              .rename(columns={0: 'home', 1: 'away'})], axis=1) \
                 .drop(columns=['stats']) \
                 .dropna(subset=['home', 'away'])
         return total_df
@@ -248,8 +263,8 @@ class FotMob:
         Returns:
             shotmap: DataFrame with the data for all the shots shown in the FotMob UI.
         """
-        response = requests.get(f'https://www.fotmob.com/api/playerStats?playerId={player_id}&seasonId={season_index}-{competition_index}&isFirstSeason=false', headers=headers)
-        time.sleep(3)
+        path = f'playerStats?playerId={player_id}&seasonId={season_index}-{competition_index}&isFirstSeason=false'
+        response = self.fotmob_request(path)
         try:
             shotmap = pd.DataFrame(response.json()['shotmap'])
         except TypeError:
