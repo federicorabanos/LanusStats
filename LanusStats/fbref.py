@@ -1,6 +1,7 @@
 import warnings
 warnings.filterwarnings("ignore")
 import requests
+from requests.exceptions import Timeout, ConnectionError, HTTPError
 from bs4 import BeautifulSoup, Comment
 import pandas as pd
 from datetime import datetime
@@ -8,6 +9,37 @@ import time
 import numpy as np
 from .functions import get_possible_leagues_for_page, possible_stats_exception
 from .exceptions import PlayerDoesntHaveInfo, MatchDoesntHaveInfo
+
+def make_request(url, params=None, retries=5, timeout=20, retry_delay=5, **kwargs):
+    for attempt in range(retries):
+        try:
+            response = requests.get(url, params=params, timeout=timeout, **kwargs)
+            response.raise_for_status()  # Verifica si hubo un error en la respuesta
+            
+            # Si la respuesta es exitosa, devolverla
+            return response
+        except Timeout:
+            print(f"Intento {attempt + 1} de {retries}: Tiempo de espera excedido. Reintentando...")
+        except ConnectionError as e:
+            print(f"Intento {attempt + 1} de {retries}: Error de conexión: {e}. Reintentando...")
+        except HTTPError as e:
+            # Manejar los códigos 502, 504 y 429
+            if response.status_code in [502, 504]:
+                error_type = "502 Bad Gateway" if response.status_code == 502 else "504 Gateway Time-out"
+                print(f"Intento {attempt + 1} de {retries}: Error {error_type}. Reintentando en {retry_delay} segundos...")
+                time.sleep(retry_delay)
+            elif response.status_code == 429:
+                print(f"Intento {attempt + 1} de {retries}: Error 429 Too Many Requests. Aplicando espera exponencial.")
+                retry_delay *= 2  # Aumenta el tiempo de espera exponencialmente
+                time.sleep(retry_delay)
+            else:
+                print(f"Error HTTP: {e}. No es un 502, 504, ni 429, deteniendo reintentos.")
+                return None
+        # Agregar un breve retraso antes de reintentar
+        time.sleep(retry_delay)
+    
+    print("Error: No se pudo establecer la conexión después de varios intentos.")
+    return None
 
 class Fbref:
 
@@ -142,14 +174,41 @@ class Fbref:
 
         return data
 
+
     def get_table(self, soup):
         return soup.find_all('table')[0]
+
 
     def parse_row(self, row):
             cols = None
             cols = row.find_all('td')
             cols = [ele.text.strip() for ele in cols]
             return cols
+
+
+    def parse_row_with_ids(self, row):
+        data = []
+        player_id = None
+        squad_id = None
+        
+        for cell in row.find_all('td'):
+            text = cell.text.strip()  # Extrae el texto de cada celda
+            data.append(text)  # Añade el texto a la lista `data`
+            
+            # Si la celda contiene un enlace, intenta extraer el href
+            link = cell.find('a')
+            if link and 'href' in link.attrs:
+                href = link['href']
+                
+                # Verifica si el enlace es de un jugador o de un equipo para extraer el ID
+                if '/players/' in href and not player_id:
+                    player_id = href.split('/')[3]  # ID del jugador
+                elif '/squads/' in href and not squad_id:
+                    squad_id = href.split('/')[3]  # ID del equipo
+        data += [player_id, squad_id]
+
+        return data
+
          
     def get_player_season_stats(self, stat, league, season=None, save_csv=False, add_page_name=False):
         """Get players season stats for a particular stat.
@@ -186,7 +245,7 @@ class Fbref:
         """Most of the code is from @BeGriffis (Twitter): 
         https://github.com/griffisben/griffis_soccer_analysis/blob/main/griffis_soccer_analysis/fbref_code.py
         """
-        response = requests.get(path)
+        response = make_request(path)
         soup = BeautifulSoup(response.content, "html.parser")
         data = []
         headings=[]
@@ -210,19 +269,24 @@ class Fbref:
             heading = headtext[i].get_text()
             headings.append(heading)
         headings=headings[1:len(headings)]
+        headings += ['Player_id', 'Squad_id']
         data.append(headings)
         table_body = table.find('tbody')
         rows = table_body.find_all('tr')
 
         for row_index in range(len(rows)):
             row = rows[row_index]
-            cols = self.parse_row(row)
+            cols = self.parse_row_with_ids(row)
             data.append(cols)
          
         df_data = pd.DataFrame(data)
         df_data = df_data.rename(columns=df_data.iloc[0])
         df_data = df_data.reindex(df_data.index.drop(0))
-        df_data = df_data.replace('',0).drop(columns=['Matches'])
+        try:
+            df_data = df_data.replace('',0).drop(columns=['Matches'])
+        except KeyError:
+            pass
+
         if league != 'Big 5 European Leagues':
             df_data.insert(4, 'Comp', [league]*len(df_data))
         df_data = df_data.dropna().reset_index(drop=True)
@@ -233,7 +297,7 @@ class Fbref:
                 df_data.columns = new_columns
 
         if save_csv:
-              df_data.to_csv(f'{league} - {stat} - {today}.csv')
+              df_data.to_csv(f'{league} - {season} - {stat} - {today}.csv')
         
         return df_data
 
@@ -243,30 +307,39 @@ class Fbref:
         Args:
             league (str): Possible leagues in get_available_leagues("Fbref")
             save_csv (bool, optional): If true, it saves the tables as a csv. Defaults to False.
+            validation_merge (str, optional): Determines the merge strategy to handle cases of players with identical names.
+            - 'weak': Merges on "Player" only, which may cause conflicts if multiple players share the same name in the league, but is faster.
+            - 'strong': Merges on "Player", "Squad", and "Position" to differentiate between players with identical names, 
+              even if they play on the same team.
+
 
         Returns:
             data: DataFrame with all the stats of players
             gk_data: DataFrame with all the stats relevant to goalkeepers
         """
+
         
         today = datetime.now().strftime('%Y-%m-%d')
         data = pd.DataFrame()
         gk_data = pd.DataFrame()
         for stat in self.possible_stats:
             print(stat)
+            placeholder = self.get_player_season_stats(f'{stat}',league, season, False, True)
+            placeholder['Player_id'] = placeholder[f'{stat}_Player_id'] 
+            placeholder['Squad_id'] = placeholder[f'{stat}_Squad_id'] 
+            merge_list = ['Player_id', 'Squad_id', 'Player']
+
             if stat in ['keepers', 'keepersadv']:
-                placeholder = self.get_player_season_stats(f'{stat}',league, season, False, True)
                 if len(gk_data) == 0:
                     gk_data = pd.concat([gk_data, placeholder], axis=1)
                 else:
-                    gk_data = gk_data.merge(placeholder, on='Player', how='left')
+                    gk_data = gk_data.merge(placeholder, on=merge_list, how='left')
             else:
-                placeholder = self.get_player_season_stats(f'{stat}',league, season, False, True)
                 if len(data) == 0:
                     data = pd.concat([data, placeholder], axis=1)
                 else:
-                    data = data.merge(placeholder, on='Player', how='left')
-        
+                    data = data.merge(placeholder, on=merge_list, how='left')
+                    
         if save_csv:
               data.to_csv(f'{league} - {stat} - player stats - {today}.csv')
 
