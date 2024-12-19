@@ -798,7 +798,7 @@ def get_possible_leagues(league, season, page):
     if page not in ['Transfermarkt', '365Scores', 'DataFactory']:
         possible_seasons_list = list(possible_leagues[page][league]['seasons'])
         if season != None and season not in possible_seasons_list:
-            raise InvalidSeasonException('league', possible_seasons_list)
+            raise InvalidSeasonException(season, possible_seasons_list)
 
     
     return possible_leagues
