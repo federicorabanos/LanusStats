@@ -697,6 +697,26 @@ def get_possible_leagues(league, season, page):
                 "id": "BRA1",
                 "seasons": None
             },
+            "LaLiga": {
+                "slug": "laliga",
+                "id": "ES1",
+                "seasons": None
+            },
+            "LaLiga 2": {
+                "slug": "laliga2",
+                "id": "ES2",
+                "seasons": None
+            },
+            "Primera RFEF Grupo 1": {
+                "slug": "primera-division-r-f-e-f-grupo-i",
+                "id": "E3G1",
+                "seasons": None
+            },
+            "Primera RFEF Grupo 2": {
+                "slug": "primera-division-r-f-e-f-grupo-ii",
+                "id": "E3G2",
+                "seasons": None
+            },
         },
         "DataFactory": {
             "Primera Division Argentina": {
