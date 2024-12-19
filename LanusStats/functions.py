@@ -1,4 +1,5 @@
 from .exceptions import *
+import numpy as np
 
 def get_possible_leagues(league, season, page):
     """Dictionary with all the possible pages, leagues and season for the scraper.
@@ -128,42 +129,203 @@ def get_possible_leagues(league, season, page):
                 'id': 9,
                 'slug': 'Premier-League',
                 'seasons': {
-                    '2023-2024', '2022-2023', '2021-2022', '2020-2021'
+                    '2024-2025', '2023-2024', '2022-2023', '2021-2022', '2020-2021'
                 }
             },
             'La Liga': {
                 'id': 12,
                 'slug': 'La-Liga',
                 'seasons': {
-                    '2023-2024', '2022-2023', '2021-2022', '2020-2021'
+                    '2024-2025', '2023-2024', '2022-2023', '2021-2022', '2020-2021'
                 }
             },
             'Ligue 1': {
                 'id': 13,
                 'slug': 'Ligue-1',
                 'seasons': {
-                    '2023-2024', '2022-2023', '2021-2022', '2020-2021'
+                    '2024-2025', '2023-2024', '2022-2023', '2021-2022', '2020-2021'
                 }
             },
             'Bundesliga': {
                 'id': 20,
                 'slug': 'Bundesliga',
                 'seasons': {
-                    '2023-2024', '2022-2023', '2021-2022', '2020-2021'
+                    '2024-2025', '2023-2024', '2022-2023', '2021-2022', '2020-2021'
                 }
             },
             'Serie A': {
                 'id': 11,
                 'slug': 'Serie-A',
                 'seasons': {
-                    '2023-2024', '2022-2023', '2021-2022', '2020-2021'
+                    '2024-2025', '2023-2024', '2022-2023', '2021-2022', '2020-2021'
                 }
             },
             'Big 5 European Leagues': {
                 'id': 'Big5',
                 'slug': 'Big-5-European-Leagues',
                 'seasons': {
-                    '2023-2024', '2022-2023', '2021-2022', '2020-2021'
+                    '2024-2025', '2023-2024', '2022-2023', '2021-2022', '2020-2021'
+                }
+            },
+            'Danish Superliga': {
+                'id': 50,
+                'slug': 'Superliga',
+                'seasons': {
+                    '2024-2025', '2023-2024', '2022-2023', '2021-2022', '2020-2021'
+                }
+            },
+            'Eredivise': {
+                'id': 23,
+                'slug': 'Eredivise',
+                'seasons': {
+                    '2024-2025', '2023-2024', '2022-2023', '2021-2022', '2020-2021'
+                }
+            },
+            'Primeira Liga Portugal': {
+                'id': 32,
+                'slug': 'Primeira-Liga',
+                'seasons': {
+                    '2024-2025', '2023-2024', '2022-2023', '2021-2022', '2020-2021'
+                }
+            },
+            'Copa America': {
+                'id': 685,
+                'slug': 'Copa-America',
+                'season': {
+                    '2024', '2021', '2019'
+                }
+            },
+            'Euros': {
+                'id': 676,
+                'slug': 'European-Championship',
+                'seasons': {
+                    '2024', '2021', '2016'
+                }
+            },
+            'Saudi League': {
+                'id': 70,
+                'slug': 'Saudi-Professional-League',
+                'seasons': {
+                    '2024-2025', '2023-2024', '2022-2023', '2021-2022'
+                }
+            },
+            'EFL Championship': {
+                'id': 10,
+                'slug': 'Championship',
+                'seasons': {
+                    '2024-2025', '2023-2024', '2022-2023', '2021-2022', '2020-2021', '2019-2020', '2018-2019'
+                }
+            },
+            'La Liga 2': {
+                'id': 17,
+                'slug': 'Segunda-Division',
+                'seasons': {
+                    '2024-2025', '2023-2024', '2022-2023', '2021-2022', '2020-2021', '2019-2020', '2018-2019'
+                }
+            },
+            'Belgian Pro League': {
+                'id': 37,
+                'slug': 'Belgian-Pro-League',
+                'seasons': {
+                    '2024-2025', '2023-2024', '2022-2023', '2021-2022', '2020-2021', '2019-2020', '2018-2019'
+                }
+            },
+            'Challenger Pro League': {
+                'id': 69,
+                'slug': 'Challenger-Pro-League',
+                'seasons': {
+                    '2024-2025', '2023-2024', '2022-2023', '2021-2022'
+                }
+            },
+            '2. Bundesliga': {
+                'id': 33,
+                'slug': '2-Bundesliga',
+                'seasons': {
+                    '2024-2025', '2023-2024', '2022-2023', '2021-2022', '2020-2021', '2019-2020', '2018-2019'
+                }
+            },
+            'Ligue 2': {
+                'id': 60,
+                'slug': 'Ligue-2',
+                'seasons': {
+                    '2024-2025', '2023-2024', '2022-2023', '2021-2022', '2020-2021', '2019-2020', '2018-2019'
+                }
+            },
+            'Serie B': {
+                'id': 18,
+                'slug': 'Serie-B',
+                'seasons': {
+                    '2024-2025', '2023-2024', '2022-2023', '2021-2022', '2020-2021', '2019-2020', '2018-2019'
+                }
+            },
+            'J1 League': {
+                'id': 25,
+                'slug': 'J1-League',
+                'seasons': {
+                    '2024', '2023', '2022', '2021'
+                }
+            },
+            'NSWL': {
+                'id': 182,
+                'slug': 'NSWL',
+                'seasons': {
+                    '2024', '2023', '2022', '2021'
+                }
+            },
+            'Wowens Super League': {
+                'id': 189,
+                'slug': 'Womens-Super-League',
+                'seasons': {
+                    '2024-2025', '2023-2024', '2022-2023', '2021-2022', '2020-2021'
+                }
+            },
+            'Liga F': {
+                'id': 230,
+                'slug': 'Liga-F',
+                'seasons': {
+                    '2024-2025', '2023-2024', '2022-2023', '2021-2022', '2020-2021'
+                }
+            },
+            'Premier Division South Africa': {
+                'id': 52,
+                'slug': 'Premier-Division',
+                'seasons': {
+                    '2024-2025', '2023-2024', '2022-2023', '2021-2022', '2020-2021'
+                }
+            },
+            'Champions League': {
+                'id': 8,
+                'slug': 'Champions-League',
+                'seasons': {
+                    '2024-2025', '2023-2024', '2022-2023', '2021-2022', '2020-2021', '2019-2020', '2018-2019'
+                }
+            },
+            'Europa League': {
+                'id': 19,
+                'slug': 'Europa-League',
+                'seasons': {
+                    '2024-2025', '2023-2024', '2022-2023', '2021-2022', '2020-2021', '2019-2020', '2018-2019'
+                }
+            },
+            'Conference League': {
+                'id': 882,
+                'slug': 'Conference-League',
+                'seasons': {
+                    '2024-2025', '2023-2024', '2022-2023'
+                }
+            },
+            'Copa Libertadores': {
+                'id': 14,
+                'slug': 'Copa-Libertadores',
+                'seasons': {
+                    '2024', '2023', '2022', '2021', '2020', '2019', '2018'
+                }
+            },
+            'Liga MX': {
+                'id': 31,
+                'slug': 'Liga-MX',
+                'seasons': {
+                    '2024-2025', '2023-2024', '2022-2023', '2021-2022', '2020-2021', '2019-2020', '2018-2019'
                 }
             }
         },
@@ -171,22 +333,10 @@ def get_possible_leagues(league, season, page):
             "Argentina Liga Profesional": {
                 "id": 155,
                 "seasons": {
-                    "08/09": 1636,
-                    "09/10": 2323,
-                    "10/11": 2887,
-                    "11/12": 3613,
-                    "12/13": 5103,
-                    "13/14": 6455,
-                    "2014": 8338,
-                    "2015": 9651,
-                    "2016": 11237,
-                    "16/17": 12117,
-                    "17/18": 13950,
-                    "18/19": 18113,
-                    "19/20": 24239,
-                    "2021": 37231,
-                    "2022": 41884,
-                    "2023": 47647,
+                    "08/09": 1636, "09/10": 2323, "10/11": 2887, "11/12": 3613, "12/13": 5103,
+                    "13/14": 6455, "2014": 8338, "2015": 9651, "2016": 11237, "16/17": 12117,
+                    "17/18": 13950, "18/19": 18113, "19/20": 24239, "2021": 37231, "2022": 41884,
+                    "2023": 47647, "2024": 57478
                 },
             },
             "Argentina Copa de la Liga Profesional": {
@@ -212,19 +362,20 @@ def get_possible_leagues(league, season, page):
                     "20/21": 27591,
                     "2021": 36166,
                     "2022": 40557,
-                    "2023": 48982
+                    "2023": 48982,
+                    "2024": 58766
                 },
             },
             "Bolivia Division Profesional": {
                 "id": 16736,
                 "seasons": {
-                    "2023": 48353
+                    "2023": 48353, "2024": 58156
                 },
             },
             "Chile Primera Division": {
                 "id": 11653,
                 "seasons": {
-                    "2023": 48017
+                    "2023": 48017, "2024": 57883
                 }
             },
             "Colombia Primera A Apertura": {
@@ -239,21 +390,24 @@ def get_possible_leagues(league, season, page):
                 "id": 11536,
                 "seasons": {
                     "2022": 42387,
-                    "2023": 52847
+                    "2023": 52847,
+                    "2024": 63819
                 },
             },
             "Ecuador LigaPro": {
                 "id": 240,
                 "seasons": {
                     "2022": 40503,
-                    "2023": 48720
+                    "2023": 48720,
+                    "2024": 58043
                 },
             },
             "Mexico LigaMX Apertura": {
                 "id": 11621,
                 "seasons": {
                     "2022": 42017,
-                    "2023": 52052
+                    "2023": 52052,
+                    "2024": 61419
                 },
             },
             "Mexico LigaMX Clausura": {
@@ -275,7 +429,7 @@ def get_possible_leagues(league, season, page):
             "Uruguay Primera Division": {
                 "id": 278,
                 "seasons": {
-                    "2023": 48634,
+                    "2023": 48634, "2024": 58264
                 },
             },
             "Venezuela Primera Division": {
@@ -296,13 +450,26 @@ def get_possible_leagues(league, season, page):
                     "2018": 15586, "2022": 41087,
                 },
             },
+            "Euros": {
+                "id": 1,
+                "seasons": {
+                    "2024": 56953, "2021": 26542, "2016": 11098, "2012": 4136, "2008": 1162,
+                    "2004": 356, "2000": 358
+                }
+            },
+            "Copa America": {
+                "id": 133,
+                "seasons": {
+                    "2024": 57114, "2021": 26681, "2019": 22352, "2016": 11115
+                }
+            },
             "Premier League": {
                 "id": 17,
                 "seasons": {
                     "15/16": 10356,
                     "16/17": 11733, "17/18": 13380, "18/19": 17359,
                     "19/20": 23776, "20/21": 29415, "21/22": 37036, 
-                    "22/23": 41886, "23/24": 52186,
+                    "22/23": 41886, "23/24": 52186, "24/25": 61627
                 },
             },
             "La Liga": {
@@ -311,7 +478,7 @@ def get_possible_leagues(league, season, page):
                     "15/16": 10495,
                     "16/17": 11906, "17/18": 13662, "18/19": 18020,
                     "19/20": 24127, "20/21": 32501, "21/22": 37223, 
-                    "22/23": 42409, "23/24": 52376,
+                    "22/23": 42409, "23/24": 52376, "24/25": 61643
                 },
             },
             "Bundesliga": {
@@ -320,7 +487,7 @@ def get_possible_leagues(league, season, page):
                     "15/16": 10419,
                     "16/17": 11818, "17/18": 13477, "18/19": 17597, 
                     "19/20": 23538, "20/21": 28210, "21/22": 37166, 
-                    "22/23": 42268, "23/24": 52608,
+                    "22/23": 42268, "23/24": 52608, "24/25": 63516
                 },
             },
             "Serie A": {
@@ -329,7 +496,7 @@ def get_possible_leagues(league, season, page):
                     "15/16": 10596, "16/17": 11966, 
                     "17/18": 13768, "18/19": 17932, "19/20": 24644, 
                     "20/21": 32523, "21/22": 37475, "22/23": 42415, 
-                    "23/24": 52760,
+                    "23/24": 52760, "24/25": 63515
                 },
             },
             "Ligue 1": {
@@ -338,7 +505,7 @@ def get_possible_leagues(league, season, page):
                     "15/16": 10373, "16/17": 11648, 
                     "17/18": 13384, "18/19": 17279, "19/20": 23872, 
                     "20/21": 28222, "21/22": 37167, "22/23": 42273, 
-                    "23/24": 52571,
+                    "23/24": 52571, "24/25": 61736
                 },
             },
             "Copa Libertadores": {
@@ -356,7 +523,43 @@ def get_possible_leagues(league, season, page):
                     "2021": 35645, "2022": 40175, "2023": 47968, 
                     "2024": 57297,
                 }
-            }, 
+            },
+            "MLS": {
+                "id": 242,
+                "seasons": {
+                    "2021": 35964, "2022": 40071, "2023": 47955, "2024": 57317,
+                }
+            },
+            "Saudi Pro League": {
+                "id": 955,
+                "seasons": {
+                    "20/21": 34459, "21/22": 37597, "22/23": 44908, "23/24": 53241, "24/25": 63998
+                }
+            },
+            "J1 League": {
+                "id": 196,
+                "seasons": {
+                    "2021": 35273, "2022": 40230, "2023": 48055, "2024": 57353,
+                }
+            },
+            "NSWL": {
+                "id": 1690,
+                "seasons": {
+                    "2021": 36480, "2022": 40863, "2023": 48864, "2024": 58145,
+                }
+            },
+            "USL Championship": {
+                "id": 13363,
+                "seasons": {
+                    "2021": 36157, "2022": 40364, "2023": 48258, "2024": 57319,
+                }
+            },
+            "La Liga 2": {
+                "id": 54,
+                "seasons": {
+                    "20/21": 32502, "21/22": 37225, "22/23": 42410, "23/24": 52563, "24/25": 62048
+                }
+            }
         },
         '365Scores': {
             'Argentina Copa de la Liga': {
@@ -382,13 +585,45 @@ def get_possible_leagues(league, season, page):
             'Primera Division Colombia': {
                 'id': 620,
                 'seasons': None
+            },
+            'Copa America': {
+                'id': 595,
+                'seasons': None
+            },
+            'Euros': {
+                'id': 6316,
+                'seasons': None
             }
         },
         'Fotmob': {
             'Premier League': {
                 'id': 47,
                 'seasons': {
-                    '2023/2024': 20720, '2022/2023': 17664, '2021/2022': 16390, '2020/2021': 15382  
+                    '2024/2025': 23685, '2023/2024': 20720, '2022/2023': 17664, '2021/2022': 16390, '2020/2021': 15382  
+                }
+            },
+            'Bundesliga': {
+                'id': 54,
+                'seasons': {
+                    '2024/2025': 23794, '2023/2024': 20946, '2022/2023': 17801, '2021/2022': 16494, '2020/2021': 15481  
+                }
+            },
+            'La Liga': {
+                'id': 87,
+                'seasons': {
+                    '2024/2025': 23686, '2023/2024': 21053, '2022/2023': 17852, '2021/2022': 16520, '2020/2021': 15585
+                }
+            },
+            'Serie A': {
+                'id': 55,
+                'seasons': {
+                    '2024/2025': 23819, '2023/2024': 20956, '2022/2023': 17866, '2021/2022': 16621, '2020/2021': 15604
+                }
+            },
+            'Ligue 1': {
+                'id': 53,
+                'seasons': {
+                    '2024/2025': 23724, '2023/2024': 20868, '2022/2023': 17810, '2021/2022': 16499, '2020/2021': 15293
                 }
             },
             'Argentina Copa de la Liga': {
@@ -400,14 +635,153 @@ def get_possible_leagues(league, season, page):
             'Argentina Primera Division': {
                 'id': 112,
                 'seasons': {
-                    '2024': 22636, '2023': 19058, '2022': 17301, '2021/2022': 16057, '2020/2021': 15756
+                    '2024': 22635, '2023': 19058, '2022': 17301, '2021/2022': 16057, '2020/2021': 15756
                 }
             },
-            'La Liga': {
-                'id': 87,
+            'Primera Division Colombia': {
+                'id': 274,
                 'seasons': {
-                    '2023/2024': 21053, '2022/2023': 17852, '2021/2022': 16520, '2020/2021': 15585
+                    '2024-Clausura': "22613-Clausura",'2024-Apertura': "22613-Apertura", '2023-Clausura': "18664-Clausura", '2023-Apertura': "18664-Clausura",
+                    '2022-Clausura': "17283-Clausura", "2022-Apertura": "17283-Apertura"
                 }
+            },
+            'Primera Division Chile': {
+                'id': 273,
+                'seasons': {
+                    '2024': 22749, '2023': 18600, '2022': 17370, "2021": 16185
+                }
+            },
+            'Brasileirao': {
+                'id': 268,
+                'seasons': {
+                    '2024': 22978, '2023': 18982, '2022': 17409, "2021": 16201
+                }
+            },
+            'Primera Division Peru': {
+                'id': 131,
+                'seasons': {
+                    '2024': 22698, '2023': 18625, '2022': 17172, "2021": 16143
+                }
+            },
+            'Copa America': {
+                'id': 44,
+                'seasons': {
+                    '2024': 22518, '2021': 15148, '2019': 13572
+                }
+            },
+            'Euros': {
+                'id': 50,
+                'seasons': {
+                    '2024': 18307, '2021': 12715, '2016': 8479
+                }
+            }
+        },
+        "Transfermarkt": {
+            "Primera Division Argentina": {
+                "slug": "superliga",
+                "id": "AR1N",
+                "seasons": None
+            },
+            "Argentina Copa de la Liga": {
+                "slug": "copa-de-la-liga-profesional-de-futbol",
+                "id": "CDLP",
+                "seasons": None
+            },
+            "Primera Division Chile": {
+                "slug": "primera-division-de-chile",
+                "id": "CLPD",
+                "seasons": None
+            },
+            "Brasileirao": {
+                "slug": "campeonato-brasileiro-serie-a",
+                "id": "BRA1",
+                "seasons": None
+            },
+            "LaLiga": {
+                "slug": "laliga",
+                "id": "ES1",
+                "seasons": None
+            },
+            "LaLiga 2": {
+                "slug": "laliga2",
+                "id": "ES2",
+                "seasons": None
+            },
+            "Primera RFEF Grupo 1": {
+                "slug": "primera-division-r-f-e-f-grupo-i",
+                "id": "E3G1",
+                "seasons": None
+            },
+            "Primera RFEF Grupo 2": {
+                "slug": "primera-division-r-f-e-f-grupo-ii",
+                "id": "E3G2",
+                "seasons": None
+            },
+        },
+        "DataFactory": {
+            "Primera Division Argentina": {
+                "slug": "primeraa",
+                "seasons": None
+            },
+            "Copa de la Liga Argetina": {
+                "slug": "copalpf",
+                "seasons": None
+            },
+            "Bundesliga": {
+                "slug": "alemania",
+                "seasons": None
+            },
+            "Primera Division Chile": {
+                "slug": "chile",
+                "seasons": None
+            },
+            "Copa Libertadores": {
+                "slug": "libertadores",
+                "seasons": None
+            },
+            "Copa Sudamericana": {
+                "slug": "sudamericana",
+                "seasons": None
+            },
+            "Eliminatorias Sudamericanas": {
+                "slug": "copalpf",
+                "seasons": None
+            },
+            "La Liga": {
+                "slug": "espana",
+                "seasons": None
+            },
+            "Ligue 1": {
+                "slug": "francia",
+                "seasons": None
+            },
+            "Premier League": {
+                "slug": "premierleague",
+                "seasons": None
+            },
+            "Serie A": {
+                "slug": "italia",
+                "seasons": None
+            },
+            "Mundial": {
+                "slug": "mundial",
+                "seasons": None
+            },
+            "Primera Division Paraguay": {
+                "slug": "paraguay",
+                "seasons": None
+            },
+            "Champions League": {
+                "slug": "champions",
+                "seasons": None
+            },
+            "Champions League": {
+                "slug": "champions",
+                "seasons": None
+            },
+            "Primera Division Uruguay": {
+                "slug": "uruguay",
+                "seasons": None
             }
         }
     }
@@ -421,10 +795,11 @@ def get_possible_leagues(league, season, page):
     possible_leagues_list = list(possible_leagues[page].keys())
     if league not in possible_leagues_list:
         raise InvalidLeagueException(league, possible_leagues_list)
-    
-    possible_seasons_list = list(possible_leagues[page][league]['seasons'])
-    if season != None and season not in possible_seasons_list:
-        raise InvalidSeasonException(season, possible_seasons_list)
+    if page not in ['Transfermarkt', '365Scores', 'DataFactory']:
+        possible_seasons_list = list(possible_leagues[page][league]['seasons'])
+        if season != None and season not in possible_seasons_list:
+            raise InvalidSeasonException('league', possible_seasons_list)
+
     
     return possible_leagues
 
@@ -483,3 +858,12 @@ def get_available_season_for_leagues(page, league):
     """
     league_data = get_possible_leagues('Argentina Copa de la Liga', '2023', 'Fotmob')[page][league]
     return league_data
+
+def semicircle(r, h, k):
+    x0 = h - r  # determine x start
+    x1 = h + r  # determine x finish
+    x = np.linspace(x0, x1, 10000)  # many points to solve for y
+
+    # use numpy for array solving of the semicircle equation
+    y = k - np.sqrt(r**2 - (x - h)**2)  
+    return x, y

@@ -6,6 +6,9 @@ import re
 from io import BytesIO
 from .functions import get_possible_leagues_for_page
 from .exceptions import MatchDoesntHaveInfo
+from .config import headers
+import time
+import numpy as np
 
 class ThreeSixFiveScores:
 
@@ -29,7 +32,8 @@ class ThreeSixFiveScores:
         """
         leagues = get_possible_leagues_for_page(league, None, '365Scores')
         league_id = leagues[league]['id']
-        response = requests.get(f'https://webws.365scores.com/web/stats/?appTypeId=5&langId=29&timezoneName=America/Buenos_Aires&userCountryId=382&competitions={league_id}&competitors=&withSeasons=true')
+        response = requests.get(f'https://webws.365scores.com/web/stats/?appTypeId=5&langId=29&timezoneName=America/Buenos_Aires&userCountryId=382&competitions={league_id}&competitors=&withSeasons=true', headers=headers)
+        time.sleep(3)
         stats = response.json()
         general_stats = stats['stats']
         total_df = pd.DataFrame()
@@ -67,9 +71,68 @@ class ThreeSixFiveScores:
         """
         
         matchup_id, game_id = self.get_ids(match_url)
-        response = requests.get(f'https://webws.365scores.com/web/game/?appTypeId=5&langId=29&timezoneName=America/Buenos_Aires&userCountryId=382&gameId={game_id}&matchupId={matchup_id}&topBookmaker=14')
+        response = requests.get(f'https://webws.365scores.com/web/game/?appTypeId=5&langId=29&timezoneName=America/Buenos_Aires&userCountryId=382&gameId={game_id}&matchupId={matchup_id}&topBookmaker=14', headers=headers)
+        time.sleep(3)
         match_data = response.json()['game']
         return match_data
+    
+    def get_requests_stats(self, match_url):
+        """Request to stats of a match
+
+        Args:
+            match_url (str): 65Scores match URL.
+
+        Returns:
+            response: JSON with the response of the request.
+        """
+        matchup_id, game_id = self.get_ids(match_url)
+        response = requests.get(f'https://webws.365scores.com/web/game/stats/?appTypeId=5&langId=29&timezoneName=America/Buenos_Aires&userCountryId=382&games={game_id}', headers=headers)
+        time.sleep(3)
+        return response
+    
+    def get_match_general_stats(self, match_url):
+        """Get data from a match and scrape it. Requests about general stats.
+
+        Args:
+            match_url (url): 365Scores match URL. Example: https://www.365scores.com/es-mx/football/match/copa-de-la-liga-profesional-7214/lanus-union-santa-fe-869-7206-7214#id=4033824
+
+        Returns:
+            match_stats: Json with game stats.
+        """
+        
+        response = self.get_requests_stats(match_url)
+        match_stats = pd.DataFrame(response.json()['statistics'])
+        
+        team1 = {
+            'id': response.json()['competitors'][0]['id'],
+            'name': response.json()['competitors'][0]['name']
+        }
+        
+        team2 = {
+            'id': response.json()['competitors'][1]['id'],
+            'name': response.json()['competitors'][1]['name']
+        }
+        
+        match_stats['team_name'] = np.where(match_stats['competitorId'] == team1['id'], team1['name'], team2['name'])
+        return match_stats
+    
+    def get_match_time_stats(self, match_url):
+        """Get time match stats
+
+        Args:
+            match_url (str): 365Scores match URL. Example: https://www.365scores.com/es-mx/football/match/copa-de-la-liga-profesional-7214/lanus-union-santa-fe-869-7206-7214#id=4033824
+
+        Returns:
+            game_statistics: JSON with various stats about time played and wasted in a match.
+        """
+        
+        response = self.get_requests_stats(match_url)
+        try:
+            game_statistics = response.json()['actualGameStatistics']
+        except KeyError:
+            raise MatchDoesntHaveInfo(match_url)
+        
+        return game_statistics
     
     def get_match_shotmap(self, match_url):
         """Scrape shotmap from the page as a DataFrame, if the match has it.
@@ -86,6 +149,9 @@ class ThreeSixFiveScores:
         except KeyError:
             raise MatchDoesntHaveInfo(match_url)
         df = pd.DataFrame(json_tiros)
+        df['xgot'] = df.xgot.str.replace('-','0')
+        df[['xg', 'xgot']] = df[['xg', 'xgot']].astype(float)
+        df = pd.concat([df, df['outcome'].apply(pd.Series).rename(columns={'name': 'shot_outcome'})],axis=1).drop(columns='outcome')
         return df
     
     def get_players_info(self, match_url):
@@ -102,14 +168,30 @@ class ThreeSixFiveScores:
         teams_df = pd.DataFrame(teams_json)
         return teams_df
     
-    def get_team_names(self, match_url):
+    def get_team_data(self, match_url):
         values = ['home', 'away']
         names = []
+        ids = []
+        colors = []
         match_data = self.get_match_data(match_url)
         for value in values:
-            nombre = match_data[f'{value}Competitor']['name']
-            names.append(nombre)
-        home, away = names[0], names[1]
+            name = match_data[f'{value}Competitor']['name']
+            id = match_data[f'{value}Competitor']['id']
+            color = match_data[f'{value}Competitor']['color']
+            names.append(name), ids.append(id), colors.append(color)
+        
+        home = {
+            'name': names[0],
+            'id': ids[0],
+            'color': colors[0]
+        }
+        
+        away = {
+            'name': names[1],
+            'id': ids[1],
+            'color': colors[1]
+        }
+        
         return home, away
     
     def get_general_match_stats(self, match_url):
@@ -146,7 +228,8 @@ class ThreeSixFiveScores:
         players_total = pd.DataFrame(match_data['members'])
         df_players = df_players.merge(players_total, on='id', how='left')
         try:
-            heatmap = requests.get(df_players[df_players['name'] == player].heatMap.iloc[0])
+            heatmap = requests.get(df_players[df_players['name'] == player].heatMap.iloc[0], headers=headers)
+            time.sleep(3)
         except AttributeError:
             raise MatchDoesntHaveInfo(match_url)
         heatmap_image = Image.open(BytesIO(heatmap.content))

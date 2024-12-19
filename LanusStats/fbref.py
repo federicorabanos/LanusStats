@@ -5,9 +5,6 @@ from bs4 import BeautifulSoup, Comment
 import pandas as pd
 from datetime import datetime
 import time
-from mplsoccer import PyPizza, add_image, FontManager
-import matplotlib.pyplot as plt
-from PIL import Image
 import numpy as np
 from .functions import get_possible_leagues_for_page, possible_stats_exception
 from .exceptions import PlayerDoesntHaveInfo, MatchDoesntHaveInfo
@@ -42,7 +39,7 @@ class Fbref:
     def player_info_exception(self, path):
         data = self.get_all_dfs(path)
         first_df = data[0]
-        if first_df.columns[0] not in ['Statistic', 'Estadísticas']:
+        if first_df.columns[0] not in ['Statistic', 'Estadísticas'] and first_df.columns.dtype != 'O':
             raise PlayerDoesntHaveInfo('path')
     
     def get_teams_season_stats(self, stat, league, season=None, save_csv=False, stats_vs=False, change_columns_names=False, add_page_name=False):
@@ -130,16 +127,18 @@ class Fbref:
 
         return df_total
         
-    def get_all_teams_season_stats(self, league, save_csv=False, stats_vs=False, change_columns_names=False, add_page_name=False):
+    def get_all_teams_season_stats(self, league, season, save_csv=False, stats_vs=False, change_columns_names=False, add_page_name=False):
         
         today = datetime.now().strftime('%Y-%m-%d')
         data = pd.DataFrame()
         for stat in self.possible_stats:
-            placeholder = self.get_teams_season_stats(f'{stat}',league, False, stats_vs, change_columns_names, add_page_name)
+            placeholder = self.get_teams_season_stats(f'{stat}',league, season, False, stats_vs, change_columns_names, add_page_name)
             data = pd.concat([data, placeholder], axis=1)
         
-        if save_csv:
-              data.to_csv(f'{league} - {stat} - {today}.csv')
+        if save_csv and stats_vs:
+            data.to_csv(f'{league} - {stat} - team vs stats - {today}.csv')
+        elif save_csv: 
+            data.to_csv(f'{league} - {stat} - team stats - {today}.csv')
 
         return data
 
@@ -189,18 +188,24 @@ class Fbref:
         """
         response = requests.get(path)
         soup = BeautifulSoup(response.content, "html.parser")
-        comment = soup.find_all(text=lambda t: isinstance(t, Comment))
-        comment_number=0
-        for i in range(len(comment)):
-            if comment[i].find('\n\n<div class="table_container"') != -1:
-                comment_number = i
-        comment_table = comment[comment_number]
-        table = comment_table.find('table')
-        table_html = BeautifulSoup(comment_table[table:], 'html.parser')
-        table = self.get_table(table_html)
         data = []
         headings=[]
-        headtext = table_html.find_all("th",scope="col")
+        
+        if league != 'Big 5 European Leagues':
+            comment = soup.find_all(text=lambda t: isinstance(t, Comment))
+            comment_number=0
+            for i in range(len(comment)):
+                if comment[i].find('\n\n<div class="table_container"') != -1:
+                    comment_number = i
+            comment_table = comment[comment_number]
+            table = comment_table.find('table')
+            table_html = BeautifulSoup(comment_table[table:], 'html.parser')
+            table = self.get_table(table_html)
+            headtext = table_html.find_all("th",scope="col")
+        else:
+            table = self.get_table(soup)
+            headtext = soup.find_all("th",scope="col")
+        
         for i in range(len(headtext)):
             heading = headtext[i].get_text()
             headings.append(heading)
@@ -218,7 +223,8 @@ class Fbref:
         df_data = df_data.rename(columns=df_data.iloc[0])
         df_data = df_data.reindex(df_data.index.drop(0))
         df_data = df_data.replace('',0).drop(columns=['Matches'])
-        df_data.insert(4, 'Comp', [league]*len(df_data))
+        if league != 'Big 5 European Leagues':
+            df_data.insert(4, 'Comp', [league]*len(df_data))
         df_data = df_data.dropna().reset_index(drop=True)
 
 
@@ -231,7 +237,7 @@ class Fbref:
         
         return df_data
 
-    def get_all_player_season_stats(self, league, save_csv=False):
+    def get_all_player_season_stats(self, league, season, save_csv=False):
         """Gets a table of ALL the stats in a players page.
 
         Args:
@@ -249,20 +255,20 @@ class Fbref:
         for stat in self.possible_stats:
             print(stat)
             if stat in ['keepers', 'keepersadv']:
-                placeholder = self.get_player_season_stats(f'{stat}',league, False, True)
+                placeholder = self.get_player_season_stats(f'{stat}',league, season, False, True)
                 if len(gk_data) == 0:
                     gk_data = pd.concat([gk_data, placeholder], axis=1)
                 else:
                     gk_data = gk_data.merge(placeholder, on='Player', how='left')
             else:
-                placeholder = self.get_player_season_stats(f'{stat}',league, False, True)
+                placeholder = self.get_player_season_stats(f'{stat}',league, season, False, True)
                 if len(data) == 0:
                     data = pd.concat([data, placeholder], axis=1)
                 else:
                     data = data.merge(placeholder, on='Player', how='left')
         
         if save_csv:
-              data.to_csv(f'{league} - {stat} - {today}.csv')
+              data.to_csv(f'{league} - {stat} - player stats - {today}.csv')
 
         #To avoid duplicates of players that played for two clubs in the same competition
         data = data.drop_duplicates(subset=['Player', 'stats_Squad']).reset_index(drop=True)
