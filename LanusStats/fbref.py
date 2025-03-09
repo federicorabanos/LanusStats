@@ -1,6 +1,6 @@
 import warnings
 warnings.filterwarnings("ignore")
-import requests
+import http.client
 from bs4 import BeautifulSoup, Comment
 import pandas as pd
 from datetime import datetime
@@ -150,6 +150,34 @@ class Fbref:
             cols = row.find_all('td')
             cols = [ele.text.strip() for ele in cols]
             return cols
+    
+    def fbref_request(self, url):
+        host = "fbref.com"
+
+        fbref_headers = {
+            "Host": host,
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+            "Referer": "https://fbref.com/",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.5",
+            "Connection": "keep-alive",
+        }
+
+        conn = http.client.HTTPSConnection(host)
+
+        try:
+            conn.request("GET", url, headers=fbref_headers)
+            
+            response = conn.getresponse()
+
+            html = response.read().decode("utf-8", errors="ignore")
+        except Exception as e:
+            print(f"Error en la solicitud: {e}")
+
+        finally:
+            conn.close()
+        
+        return html
          
     def get_player_season_stats(self, stat, league, season=None, save_csv=False, add_page_name=False):
         """Get players season stats for a particular stat.
@@ -173,21 +201,21 @@ class Fbref:
         today = datetime.now().strftime('%Y-%m-%d')
         
         if league == 'Big 5 European Leagues':
-            path = f'https://fbref.com/en/comps/{leagues[league]["id"]}/{stat}/players/{leagues[league]["slug"]}-Stats'
+            path = f'/en/comps/{leagues[league]["id"]}/{stat}/players/{leagues[league]["slug"]}-Stats'
         elif season != None:
-            path = f'https://fbref.com/en/comps/{leagues[league]["id"]}/{season}/{stat}/{season}/{leagues[league]["slug"]}-Stats'
+            path = f'/en/comps/{leagues[league]["id"]}/{season}/{stat}/{season}/{leagues[league]["slug"]}-Stats'
         elif season != None and league == 'Big 5 European Leagues':
-            path = f'https://fbref.com/en/comps/{leagues[league]["id"]}/{season}/{stat}/players/{season}/{leagues[league]["slug"]}-Stats'
+            path = f'/en/comps/{leagues[league]["id"]}/{season}/{stat}/players/{season}/{leagues[league]["slug"]}-Stats'
         else:
-            path = f'https://fbref.com/en/comps/{leagues[league]["id"]}/{stat}/{leagues[league]["slug"]}-Stats'
+            path = f'/en/comps/{leagues[league]["id"]}/{stat}/{leagues[league]["slug"]}-Stats'
 
         time.sleep(3)
         
         """Most of the code is from @BeGriffis (Twitter): 
         https://github.com/griffisben/griffis_soccer_analysis/blob/main/griffis_soccer_analysis/fbref_code.py
         """
-        response = requests.get(path)
-        soup = BeautifulSoup(response.content, "html.parser")
+        response = self.fbref_request(path)
+        soup = BeautifulSoup(response, "html.parser")
         data = []
         headings=[]
         
