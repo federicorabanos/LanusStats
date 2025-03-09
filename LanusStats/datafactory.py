@@ -121,7 +121,9 @@ class DataFactory:
 
         data = self.make_request(league, match_id)
         df = self.get_incidence_df(data, incidence_type)
-        df = self.parse_coordinates(df, league, match_id)
+        
+        if 'coord' in df.columns:
+            df = self.parse_coordinates(df, league, match_id)
 
         df = self.parse_minutes(df)
 
