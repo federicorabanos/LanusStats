@@ -1,8 +1,8 @@
 import json
 from datetime import datetime
 import time
-from functions import get_possible_leagues_for_page, get_proxy, random, pd, uc, Options, get_random_rate_sleep
-from exceptions import InvalidStrType, MatchDoesntHaveInfo, PlayerDoesntHaveInfo
+from .functions import get_possible_leagues_for_page, get_proxy, pd, uc, Options, get_random_rate_sleep
+from .exceptions import InvalidStrType, MatchDoesntHaveInfo, PlayerDoesntHaveInfo
 from faker import Faker
 from faker.providers import user_agent
 from bs4 import BeautifulSoup
