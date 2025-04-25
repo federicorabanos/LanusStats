@@ -1,5 +1,11 @@
 from .exceptions import *
 import numpy as np
+import random
+from selenium.webdriver.chrome.options import Options
+import undetected_chromedriver as uc
+from IPython.display import clear_output
+from selenium.webdriver.common.by import By
+import pandas as pd
 
 def get_possible_leagues(league, season, page):
     """Dictionary with all the possible pages, leagues and season for the scraper.
@@ -24,105 +30,105 @@ def get_possible_leagues(league, season, page):
                 'id': 905,
                 'slug': 'Copa-de-la-Liga-Profesional',
                 'seasons': {
-                    '2024', '2023', '2022', '2021', '2020'
+                    '2025', '2024', '2023', '2022', '2021', '2020'
                 }
             },
             'Primera Division Argentina': {
                 'id': 21,
                 'slug': 'Primera-Division',
                 'seasons': {
-                    '2024', '2023', '2022', '2021'
+                    '2025', '2024', '2023', '2022', '2021'
                 }
             },
             'Primera Division Uruguay': {
                 'id': 45,
                 'slug': 'Primera-Division',
                 'seasons': {
-                    '2024', '2023', '2022', '2021'
+                    '2025', '2024', '2023', '2022', '2021'
                 }
             },
             'Brasileirao': {
                 'id': 24,
                 'slug': 'Serie-A',
                 'seasons': {
-                    '2024', '2023', '2022', '2021'
+                    '2025', '2024', '2023', '2022', '2021'
                 }
             },
             'Brasileirao B': {
                 'id': 38,
                 'slug': 'Serie-B',
                 'seasons': {
-                    '2024', '2023', '2022', '2021'
+                    '2025', '2024', '2023', '2022', '2021'
                 }
             },
             'Primera Division Colombia': {
                 'id': 41,
                 'slug': 'Primera-A',
                 'seasons': {
-                    '2024', '2023', '2022', '2021'
+                    '2025', '2024', '2023', '2022', '2021'
                 }
             },
             'Primera Division Chile': {
                 'id': 35,
                 'slug': 'Primera-Division',
                 'seasons': {
-                    '2024', '2023', '2022', '2021'
+                    '2025', '2024', '2023', '2022', '2021'
                 }
             },
             'Primera Division Peru': {
                 'id': 44,
                 'slug': 'Liga-1',
                 'seasons': {
-                    '2024', '2023', '2022', '2021'
+                    '2025', '2024', '2023', '2022', '2021'
                 }
             },
             'Primera Division Venezuela': {
                 'id': 105,
                 'slug': 'Liga-FUTVE',
                 'seasons': {
-                    '2024', '2023', '2022', '2021'
+                    '2025', '2024', '2023', '2022', '2021'
                 }
             },
             'Primera Division Ecuador': {
                 'id': 58,
                 'slug': 'Serie-A',
                 'seasons': {
-                    '2024', '2023', '2022', '2021'
+                    '2025', '2024', '2023', '2022', '2021'
                 }
             },
             'Primera Division Bolivia': {
                 'id': 74,
                 'slug': 'Bolivian-Primera-Division',
                 'seasons': {
-                    '2024', '2023', '2022', '2021'
+                    '2025', '2024', '2023', '2022', '2021'
                 }
             },
             'Primera Division Paraguay': {
                 'id': 61,
                 'slug': 'Primera-Division',
                 'seasons': {
-                    '2024', '2023', '2022', '2021'
+                    '2025', '2024', '2023', '2022', '2021'
                 }
             },
             'Brasileirao F': {
                 'id': 206,
                 'slug': 'Serie-A1',
                 'seasons': {
-                    '2024', '2023', '2022', '2021'
+                    '2025', '2024', '2023', '2022', '2021'
                 }
             },
             'MLS': {
                 'id': 22,
                 'slug': 'Major-League-Soccer',
                 'seasons': {
-                    '2024', '2023', '2022', '2021'
+                    '2025', '2024', '2023', '2022', '2021'
                 }
             },
             'USL Championship': {
                 'id': 73,
                 'slug': 'USL-Championship',
                 'seasons': {
-                    '2024', '2023', '2022', '2021'
+                    '2025', '2024', '2023', '2022', '2021'
                 }
             },
             'Premier League': {
@@ -262,14 +268,14 @@ def get_possible_leagues(league, season, page):
                 'id': 25,
                 'slug': 'J1-League',
                 'seasons': {
-                    '2024', '2023', '2022', '2021'
+                    '2025', '2024', '2023', '2022', '2021'
                 }
             },
             'NSWL': {
                 'id': 182,
                 'slug': 'NSWL',
                 'seasons': {
-                    '2024', '2023', '2022', '2021'
+                    '2025', '2024', '2023', '2022', '2021'
                 }
             },
             'Wowens Super League': {
@@ -318,7 +324,7 @@ def get_possible_leagues(league, season, page):
                 'id': 14,
                 'slug': 'Copa-Libertadores',
                 'seasons': {
-                    '2024', '2023', '2022', '2021', '2020', '2019', '2018'
+                    '2025', '2024', '2023', '2022', '2021', '2020', '2019', '2018'
                 }
             },
             'Liga MX': {
@@ -336,7 +342,7 @@ def get_possible_leagues(league, season, page):
                     "08/09": 1636, "09/10": 2323, "10/11": 2887, "11/12": 3613, "12/13": 5103,
                     "13/14": 6455, "2014": 8338, "2015": 9651, "2016": 11237, "16/17": 12117,
                     "17/18": 13950, "18/19": 18113, "19/20": 24239, "2021": 37231, "2022": 41884,
-                    "2023": 47647, "2024": 57478
+                    "2023": 47647, "2024": 57478, "2025": 70268
                 },
             },
             "Argentina Copa de la Liga Profesional": {
@@ -353,7 +359,7 @@ def get_possible_leagues(league, season, page):
             "Argentina Primera Nacional": {
                 "id": 703,
                 "seasons": {
-                    "2023": 48079, "2024": 57782
+                    "2023": 48079, "2024": 57782, "2025": 71009
                 },
             },
             "Brasileirão Série A": {
@@ -363,19 +369,20 @@ def get_possible_leagues(league, season, page):
                     "2021": 36166,
                     "2022": 40557,
                     "2023": 48982,
-                    "2024": 58766
+                    "2024": 58766,
+                    "2025": 72034
                 },
             },
             "Bolivia Division Profesional": {
                 "id": 16736,
                 "seasons": {
-                    "2023": 48353, "2024": 58156
+                    "2023": 48353, "2024": 58156, "2025": 73577
                 },
             },
             "Chile Primera Division": {
                 "id": 11653,
                 "seasons": {
-                    "2023": 48017, "2024": 57883
+                    "2023": 48017, "2024": 57883, "2025": 71131
                 }
             },
             "Colombia Primera A Apertura": {
@@ -383,7 +390,8 @@ def get_possible_leagues(league, season, page):
                 "seasons": {
                     "2022": 40320,
                     "2023": 48283,
-                    "2024": 57374
+                    "2024": 57374,
+                    "2025": 70681
                 },
             },
             "Colombia Primera A Clausura": {
@@ -399,7 +407,8 @@ def get_possible_leagues(league, season, page):
                 "seasons": {
                     "2022": 40503,
                     "2023": 48720,
-                    "2024": 58043
+                    "2024": 58043,
+                    "2025": 71184
                 },
             },
             "Mexico LigaMX Apertura": {
@@ -415,7 +424,8 @@ def get_possible_leagues(league, season, page):
                 "seasons": {
                     "2022": 40080,
                     "2023": 47656,
-                    "2024": 57315
+                    "2024": 57315,
+                    "2025": 70096
                 },
             },
             "Peru Liga 1": {
@@ -423,20 +433,22 @@ def get_possible_leagues(league, season, page):
                 "seasons": {
                     "2022": 40118,
                     "2023": 48078,
-                    "2024": 57741
+                    "2024": 57741,
+                    "2025": 70962
                 },
             },
             "Uruguay Primera Division": {
                 "id": 278,
                 "seasons": {
-                    "2023": 48634, "2024": 58264
+                    "2023": 48634, "2024": 58264, "2025": 71306
                 },
             },
             "Venezuela Primera Division": {
                 "id": 231,
                 "seasons": {
                     "2023": 48742,
-                    "2024": 57694
+                    "2024": 57694,
+                    "2025": 71012
                 },
             },
             "World Cup": {
@@ -447,7 +459,7 @@ def get_possible_leagues(league, season, page):
                     "1970": 17565, "1974": 17566, "1978": 17567, "1982": 17568,
                     "1986": 17569, "1990": 17570, "1994": 17571, "1998": 1151,
                     "2002": 2636, "2006": 16, "2010": 2531, "2014": 7528,
-                    "2018": 15586, "2022": 41087,
+                    "2018": 15586, "2022": 41087
                 },
             },
             "Euros": {
@@ -513,7 +525,7 @@ def get_possible_leagues(league, season, page):
                 "seasons": {
                     "2018": 15806, "2019": 19989, "2020": 26785, 
                     "2021": 35576, "2022": 40174, "2023": 47974, 
-                    "2024": 57296,
+                    "2024": 57296, "2025": 70083
                 }
             },
             "Copa Sudamericana": {
@@ -521,13 +533,13 @@ def get_possible_leagues(league, season, page):
                 "seasons": {
                     "2018": 15809, "2019": 19990, "2020": 26788, 
                     "2021": 35645, "2022": 40175, "2023": 47968, 
-                    "2024": 57297,
+                    "2024": 57297, "2025": 70070
                 }
             },
             "MLS": {
                 "id": 242,
                 "seasons": {
-                    "2021": 35964, "2022": 40071, "2023": 47955, "2024": 57317,
+                    "2021": 35964, "2022": 40071, "2023": 47955, "2024": 57317, "2025": 70158
                 }
             },
             "Saudi Pro League": {
@@ -539,19 +551,19 @@ def get_possible_leagues(league, season, page):
             "J1 League": {
                 "id": 196,
                 "seasons": {
-                    "2021": 35273, "2022": 40230, "2023": 48055, "2024": 57353,
+                    "2021": 35273, "2022": 40230, "2023": 48055, "2024": 57353, "2025": 69871
                 }
             },
             "NSWL": {
                 "id": 1690,
                 "seasons": {
-                    "2021": 36480, "2022": 40863, "2023": 48864, "2024": 58145,
+                    "2021": 36480, "2022": 40863, "2023": 48864, "2024": 58145, "2025": 71412
                 }
             },
             "USL Championship": {
                 "id": 13363,
                 "seasons": {
-                    "2021": 36157, "2022": 40364, "2023": 48258, "2024": 57319,
+                    "2021": 36157, "2022": 40364, "2023": 48258, "2024": 57319, "2025": 70263
                 }
             },
             "La Liga 2": {
@@ -867,3 +879,44 @@ def semicircle(r, h, k):
     # use numpy for array solving of the semicircle equation
     y = k - np.sqrt(r**2 - (x - h)**2)  
     return x, y
+
+def get_proxy():
+    ''' Gets a proxy address.
+
+    Can be used to initialize a Selenium WebDriver to change the address of the\
+    browser. Adapted from https://stackoverflow.com/questions/59409418/how-to-rotate-selenium-webrowser-ip-address.\
+    Randomly chooses one proxy.
+    
+    Returns
+    -------
+    proxy : str
+        In the form <IP address>:<port>
+    '''
+    options = Options()
+    options.add_argument('--headless')
+    driver = uc.Chrome(headless=True,use_subprocess=False,option=options)
+    clear_output()
+    
+    try:
+        driver.get('https://sslproxies.org/')
+        table = driver.find_elements(By.TAG_NAME, 'table')[0]
+        df = pd.read_html(table.get_attribute('outerHTML'))[0]
+        df = df.iloc[np.where(~np.isnan(df['Port']))[0],:] # ignore nans
+
+        ips = df['IP Address'].values
+        ports = df['Port'].astype('int').values
+
+        driver.quit()
+        proxies = list()
+        for i in range(len(ips)):
+            proxies.append('{}:{}'.format(ips[i], ports[i]))
+        i = random.randint(0, len(proxies)-1)
+        return proxies[i]
+    except Exception as e:
+        driver.close()
+        driver.quit()
+        raise e
+
+def get_random_rate_sleep(min, max):
+    limit = random.uniform(min, max)
+    return limit

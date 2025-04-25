@@ -1,10 +1,16 @@
 import json
-import pandas as pd
 from datetime import datetime
 import time
-from .functions import get_possible_leagues_for_page
+from .functions import get_possible_leagues_for_page, get_proxy, pd, uc, Options, get_random_rate_sleep
 from .exceptions import InvalidStrType, MatchDoesntHaveInfo, PlayerDoesntHaveInfo
-import http.client
+from faker import Faker
+from faker.providers import user_agent
+from bs4 import BeautifulSoup
+
+fake = Faker()
+fake.add_provider(user_agent)
+
+user_agent_provider = fake.user_agent
 
 class SofaScore:
     
@@ -64,7 +70,8 @@ class SofaScore:
             'errorLeadToShot',
             'passToAssist'
             ]
-    
+        self.base_url = 'https://api.sofascore.com/'
+
     def get_match_id(self, match_url):
         """Get match id for any match
         Args:
@@ -78,7 +85,7 @@ class SofaScore:
         match_id = match_url.split(':')[-1]
         return match_id
         
-    def httpclient_request(self, path):
+    def sofascore_request(self, path):
         """Request used to SofaScore
 
         Args:
@@ -87,19 +94,31 @@ class SofaScore:
         Returns:
             data: _description_
         """
-        time.sleep(5)
-        url = "api.sofascore.com"
 
-        conn = http.client.HTTPSConnection(url)
+        path = f"{self.base_url}{path}"
 
-        conn.request("GET", path)
+        resultado = get_proxy()
+        proxy_host = resultado.split(':')[0]
+        proxy_port = resultado.split(':')[-1]
 
-        res = conn.getresponse()
+        chrome_options = Options()
+        chrome_options.add_argument('--proxy-server=http://{}:{}'.format(proxy_host, proxy_port))
 
-        data = res.read()
+        fake = Faker()
 
-        conn.close()
-        
+        user_agent = fake.chrome()
+
+        chrome_options.add_argument(f'user-agent={user_agent}')
+        chrome_options.add_argument('accept-language=en-US,en;q=0.9')
+
+        driver = uc.Chrome(headless=True,use_subprocess=False,option=chrome_options)
+        driver.get(path)
+        soup = BeautifulSoup(driver.page_source, 'html.parser')
+
+        driver.close()
+
+        data = json.loads(soup.text)
+        time.sleep(get_random_rate_sleep(3, 5))
         return data
 
     def get_match_data(self, match_url):
@@ -116,13 +135,11 @@ class SofaScore:
         
         url = f'api/v1/event/{match_id}'
         
-        data = self.httpclient_request(url)
+        data = self.sofascore_request(url)
         
-        time.sleep(3)
+        time.sleep(get_random_rate_sleep(2, 3))
         
-        json_data = json.loads(data)
-        
-        return json_data
+        return data
 
     def get_match_momentum(self, match_url):
         """Get values of the momentum graph in SofaScore UI
@@ -137,11 +154,10 @@ class SofaScore:
         match_id = self.get_match_id(match_url)
         
         url = f'/api/v1/event/{match_id}/graph'
-        
-        data = self.httpclient_request(url)
+        data = self.sofascore_request(url)
 
         try:
-            points = json.loads(data)['graphPoints']
+            points = data['graphPoints']
         except KeyError:
             raise MatchDoesntHaveInfo(match_url)
         
@@ -164,9 +180,9 @@ class SofaScore:
         
         url = f'api/v1/event/{match_id}/shotmap'
         
-        data = self.httpclient_request(url)
+        data = self.sofascore_request(url)
         try:
-            shots = json.loads(data)['shotmap']
+            shots = data['shotmap']
         except KeyError:
             raise MatchDoesntHaveInfo(match_url)
         
@@ -225,16 +241,14 @@ class SofaScore:
                 f'&fields={concatenated_fields}'+\
                 f'&filters=position.in.{positions}'
                 
-            data = self.httpclient_request(request_url)
+            data = self.sofascore_request(request_url)
             
-            response = json.loads(data)
-            
-            new_df = pd.DataFrame(response['results'])
+            new_df = pd.DataFrame(data['results'])
             new_df['player'] = new_df.player.apply(pd.Series)['name']
             new_df['team'] = new_df.team.apply(pd.Series)['name']
             df = pd.concat([df, new_df])
             
-            if response.get('page') == response.get('pages'):
+            if data.get('page') == data.get('pages'):
                 print('End of the pages')
                 break
             offset += 100
@@ -261,8 +275,7 @@ class SofaScore:
         
         request_url = f'api/v1/event/{match_id}/lineups'
         
-        data = self.httpclient_request(request_url)
-        response = json.loads(data)
+        response = self.sofascore_request(request_url)
         
         names = {'home': home_name, 'away': away_name}
         dataframes = {}
@@ -320,8 +333,8 @@ class SofaScore:
 
         request_url = f'api/v1/event/{match_id}/average-positions'
 
-        data = self.httpclient_request(request_url)
-        response = json.loads(data)
+        data = self.sofascore_request(request_url)
+        response = data
         
         names = {'home': home_name, 'away': away_name}
         dataframes = {}
@@ -339,15 +352,13 @@ class SofaScore:
     ############################################################################
     
     def get_lineups(self, match_url):
-        
         match_id = self.get_match_id(match_url)
-        
+
         request_url = f'api/v1/event/{match_id}/lineups'
         
-        data = self.httpclient_request(request_url)
-        response = json.loads(data)
+        data = self.sofascore_request(request_url)
         
-        return response
+        return data
     
     def get_player_ids(self, match_url):
         """Get the player ids for a Sofascore match
@@ -392,11 +403,10 @@ class SofaScore:
 
         request_url = f'api/v1/event/{match_id}/player/{player_id}/heatmap'
         
-        data = self.httpclient_request(request_url)
-        response = json.loads(data)
+        data = self.sofascore_request(request_url)
         
         try:
-            heatmap = pd.DataFrame(response['heatmap'])
+            heatmap = pd.DataFrame(data['heatmap'])
         except KeyError:
             raise MatchDoesntHaveInfo(match_url)
         
@@ -418,11 +428,10 @@ class SofaScore:
         season_id = get_possible_leagues_for_page(league, season, 'Sofascore')[league]['seasons'][season]
         request_url = f'api/v1/player/{player_id}/unique-tournament/{league_id}/season/{season_id}/heatmap/overall'
         
-        data = self.httpclient_request(request_url)
-        response = json.loads(data)
+        data = self.sofascore_request(request_url)
         
         try:
-            season_heatmap = pd.DataFrame(response['points'])
+            season_heatmap = pd.DataFrame(data['points'])
         except KeyError:
             raise PlayerDoesntHaveInfo(player_id)
 
