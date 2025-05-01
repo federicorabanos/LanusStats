@@ -271,9 +271,9 @@ def get_possible_leagues(league, season, page):
                     '2025', '2024', '2023', '2022', '2021'
                 }
             },
-            'NSWL': {
+            'NWSL': {
                 'id': 182,
-                'slug': 'NSWL',
+                'slug': 'NWSL',
                 'seasons': {
                     '2025', '2024', '2023', '2022', '2021'
                 }
@@ -480,7 +480,7 @@ def get_possible_leagues(league, season, page):
                 "seasons": {
                     "15/16": 10356,
                     "16/17": 11733, "17/18": 13380, "18/19": 17359,
-                    "19/20": 23776, "20/21": 29415, "21/22": 37036, 
+                    "19/20": 23776, "20/21": 29415, "21/22": 37036,
                     "22/23": 41886, "23/24": 52186, "24/25": 61627
                 },
             },
@@ -489,7 +489,7 @@ def get_possible_leagues(league, season, page):
                 "seasons": {
                     "15/16": 10495,
                     "16/17": 11906, "17/18": 13662, "18/19": 18020,
-                    "19/20": 24127, "20/21": 32501, "21/22": 37223, 
+                    "19/20": 24127, "20/21": 32501, "21/22": 37223,
                     "22/23": 42409, "23/24": 52376, "24/25": 61643
                 },
             },
@@ -497,42 +497,42 @@ def get_possible_leagues(league, season, page):
                 "id": 35,
                 "seasons": {
                     "15/16": 10419,
-                    "16/17": 11818, "17/18": 13477, "18/19": 17597, 
-                    "19/20": 23538, "20/21": 28210, "21/22": 37166, 
+                    "16/17": 11818, "17/18": 13477, "18/19": 17597,
+                    "19/20": 23538, "20/21": 28210, "21/22": 37166,
                     "22/23": 42268, "23/24": 52608, "24/25": 63516
                 },
             },
             "Serie A": {
                 "id": 23,
                 "seasons": {
-                    "15/16": 10596, "16/17": 11966, 
-                    "17/18": 13768, "18/19": 17932, "19/20": 24644, 
-                    "20/21": 32523, "21/22": 37475, "22/23": 42415, 
+                    "15/16": 10596, "16/17": 11966,
+                    "17/18": 13768, "18/19": 17932, "19/20": 24644,
+                    "20/21": 32523, "21/22": 37475, "22/23": 42415,
                     "23/24": 52760, "24/25": 63515
                 },
             },
             "Ligue 1": {
                 "id": 34,
                 "seasons": {
-                    "15/16": 10373, "16/17": 11648, 
-                    "17/18": 13384, "18/19": 17279, "19/20": 23872, 
-                    "20/21": 28222, "21/22": 37167, "22/23": 42273, 
+                    "15/16": 10373, "16/17": 11648,
+                    "17/18": 13384, "18/19": 17279, "19/20": 23872,
+                    "20/21": 28222, "21/22": 37167, "22/23": 42273,
                     "23/24": 52571, "24/25": 61736
                 },
             },
             "Copa Libertadores": {
                 "id": 384,
                 "seasons": {
-                    "2018": 15806, "2019": 19989, "2020": 26785, 
-                    "2021": 35576, "2022": 40174, "2023": 47974, 
+                    "2018": 15806, "2019": 19989, "2020": 26785,
+                    "2021": 35576, "2022": 40174, "2023": 47974,
                     "2024": 57296, "2025": 70083
                 }
             },
             "Copa Sudamericana": {
                 "id": 480,
                 "seasons": {
-                    "2018": 15809, "2019": 19990, "2020": 26788, 
-                    "2021": 35645, "2022": 40175, "2023": 47968, 
+                    "2018": 15809, "2019": 19990, "2020": 26788,
+                    "2021": 35645, "2022": 40175, "2023": 47968,
                     "2024": 57297, "2025": 70070
                 }
             },
@@ -554,7 +554,7 @@ def get_possible_leagues(league, season, page):
                     "2021": 35273, "2022": 40230, "2023": 48055, "2024": 57353, "2025": 69871
                 }
             },
-            "NSWL": {
+            "NWSL": {
                 "id": 1690,
                 "seasons": {
                     "2021": 36480, "2022": 40863, "2023": 48864, "2024": 58145, "2025": 71412
@@ -608,16 +608,28 @@ def get_possible_leagues(league, season, page):
             }
         },
         'Fotmob': {
+            'NWSL Challenge Cup': {
+                'id': 10167,
+                'seasons': {
+                    '2025', '2024', '2023', '2022', '2021', '2020'
+                }
+            },
+            'NWSL': {
+                'id': 9134,
+                'seasons': {
+                    '2025', '2024', '2023', '2022', '2021', '2020', '2019'
+                }
+            },
             'Premier League': {
                 'id': 47,
                 'seasons': {
-                    '2024/2025': 23685, '2023/2024': 20720, '2022/2023': 17664, '2021/2022': 16390, '2020/2021': 15382  
+                    '2024/2025': 23685, '2023/2024': 20720, '2022/2023': 17664, '2021/2022': 16390, '2020/2021': 15382
                 }
             },
             'Bundesliga': {
                 'id': 54,
                 'seasons': {
-                    '2024/2025': 23794, '2023/2024': 20946, '2022/2023': 17801, '2021/2022': 16494, '2020/2021': 15481  
+                    '2024/2025': 23794, '2023/2024': 20946, '2022/2023': 17801, '2021/2022': 16494, '2020/2021': 15481
                 }
             },
             'La Liga': {
@@ -797,13 +809,13 @@ def get_possible_leagues(league, season, page):
             }
         }
     }
-    
+
     #Exceptions or cases of error
     if season != None and type(season) != str:
         raise InvalidStrType(season)
     if type(league) != str:
         raise InvalidStrType(league)
-    
+
     possible_leagues_list = list(possible_leagues[page].keys())
     if league not in possible_leagues_list:
         raise InvalidLeagueException(league, possible_leagues_list)
@@ -812,7 +824,7 @@ def get_possible_leagues(league, season, page):
         if season != None and season not in possible_seasons_list:
             raise InvalidSeasonException(season, possible_seasons_list)
 
-    
+
     return possible_leagues
 
 def get_possible_leagues_for_page(league, season, page):
@@ -828,15 +840,15 @@ def get_possible_leagues_for_page(league, season, page):
     """
     leagues = get_possible_leagues(league, season, page)[page]
     return leagues
-    
+
 def possible_stats_exception(possible_stats, stat):
     if stat not in possible_stats:
         raise InvalidStat('stat', stat, possible_stats)
-    
+
 def invalid_type_str_exception(params):
     if type(params) != str:
         raise InvalidStrType(params)
-    
+
 def get_available_pages():
     """Get available pages inside the scraper functions of this repo
 
@@ -877,7 +889,7 @@ def semicircle(r, h, k):
     x = np.linspace(x0, x1, 10000)  # many points to solve for y
 
     # use numpy for array solving of the semicircle equation
-    y = k - np.sqrt(r**2 - (x - h)**2)  
+    y = k - np.sqrt(r**2 - (x - h)**2)
     return x, y
 
 def get_proxy():
@@ -886,7 +898,7 @@ def get_proxy():
     Can be used to initialize a Selenium WebDriver to change the address of the\
     browser. Adapted from https://stackoverflow.com/questions/59409418/how-to-rotate-selenium-webrowser-ip-address.\
     Randomly chooses one proxy.
-    
+
     Returns
     -------
     proxy : str
@@ -896,7 +908,7 @@ def get_proxy():
     options.add_argument('--headless')
     driver = uc.Chrome(headless=True,use_subprocess=False,option=options)
     clear_output()
-    
+
     try:
         driver.get('https://sslproxies.org/')
         table = driver.find_elements(By.TAG_NAME, 'table')[0]
