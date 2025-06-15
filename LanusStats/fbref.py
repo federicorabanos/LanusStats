@@ -200,12 +200,12 @@ class Fbref:
         
         today = datetime.now().strftime('%Y-%m-%d')
         
-        if league == 'Big 5 European Leagues':
+        if league == 'Big 5 European Leagues' and season == None:
             path = f'/en/comps/{leagues[league]["id"]}/{stat}/players/{leagues[league]["slug"]}-Stats'
+        elif league == 'Big 5 European Leagues' and season != None:
+            path = f'/en/comps/{leagues[league]["id"]}/{season}/{stat}/players/{season}/{leagues[league]["slug"]}-Stats'
         elif season != None:
             path = f'/en/comps/{leagues[league]["id"]}/{season}/{stat}/{season}/{leagues[league]["slug"]}-Stats'
-        elif season != None and league == 'Big 5 European Leagues':
-            path = f'/en/comps/{leagues[league]["id"]}/{season}/{stat}/players/{season}/{leagues[league]["slug"]}-Stats'
         else:
             path = f'/en/comps/{leagues[league]["id"]}/{stat}/{leagues[league]["slug"]}-Stats'
 
