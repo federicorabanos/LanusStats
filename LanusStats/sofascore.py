@@ -153,7 +153,7 @@ class SofaScore:
         
         match_id = self.get_match_id(match_url)
         
-        url = f'/api/v1/event/{match_id}/graph'
+        url = f'api/v1/event/{match_id}/graph'
         data = self.sofascore_request(url)
 
         try:
