@@ -138,7 +138,6 @@ class FotMob:
         """
         url = f'https://www.fotmob.com/api/{path}'
         token = self.get_x_mas()
-        print("Token x-mas:", token)
         dict_token = {
             "X-Mas": token
         }
