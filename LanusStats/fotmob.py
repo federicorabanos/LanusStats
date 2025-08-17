@@ -1,7 +1,13 @@
 import requests
 import pandas as pd
 import time
-from .functions import get_possible_leagues_for_page
+import json
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
+from .functions import get_possible_leagues_for_page, Options, By, get_random_rate_sleep
 from .exceptions import InvalidStat, MatchDoesntHaveInfo
 from .config import headers
 
@@ -71,18 +77,74 @@ class FotMob:
             'total_red_card_team'
         ]
 
+        self._fotmob_token_cache = {}
+        self.CACHE_SECONDS = 3 * 60 * 60
+
+    def get_x_mas(self):
+        """
+        Devuelve el token x-mas cacheado si existe y no expiró,
+        sino abre Selenium, lo captura y lo guarda en cache por 3 horas.
+        """
+        now = time.time()
+        url = 'https://www.fotmob.com/es/matches/atletico-tucuman-vs-central-cordoba-de-santiago/wcumqqe#4393518'
+        if url in self._fotmob_token_cache and now < self._fotmob_token_cache[url]["expires_at"]:
+            return self._fotmob_token_cache[url]["x_mas"]
+
+        options = Options()
+        options.add_argument("--headless=new")
+        options.add_argument("--disable-gpu")
+        options.add_argument("--no-sandbox")
+        options.set_capability("goog:loggingPrefs", {"performance": "ALL"})
+
+        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+        driver.get(url)
+
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
+
+        x_mas = None
+
+        for entry in driver.get_log("performance"):
+            try:
+                message = json.loads(entry["message"])["message"]
+                if message.get("method") != "Network.requestWillBeSent":
+                    continue
+                request = message.get("params", {}).get("request", {})
+                url_request = request.get("url", "")
+                headers = request.get("headers", {})
+
+                if "/api/data/matchDetails" in url_request and "x-mas" in headers:
+                    x_mas = headers["x-mas"]
+                    break
+            except (KeyError, TypeError, json.JSONDecodeError):
+                continue
+
+        driver.quit()
+
+        if not x_mas:
+            raise ValueError("No se pudo obtener el token")
+
+        # Guardar en cache por 3 horas
+        self._fotmob_token_cache[url] = {"x_mas": x_mas, "expires_at": now + self.CACHE_SECONDS}
+        return x_mas
+
     def fotmob_request(self, path):
-        """Code by probberechts: https://github.com/probberechts/soccerdata/pull/745"""
+        """Make request to FotMob.
 
-        try:
-            r = requests.get("http://46.101.91.154:6006/", headers=headers)
-        except requests.exceptions.ConnectionError:
-            raise ConnectionError("Unable to connect to the session cookie server.\nNo se pudo conectar a la sesión de las cookies del server.")
+        Args:
+            path (str): URL to make the request.
 
-        token = r.json()
-        headers_with_token = headers | token
-        response = requests.get(f'https://www.fotmob.com/api/{path}', headers=headers_with_token)
-        time.sleep(3)
+        Returns:
+            response: Response of the request.
+        """
+        url = f'https://www.fotmob.com/api/{path}'
+        token = self.get_x_mas()
+        print("Token x-mas:", token)
+        dict_token = {
+            "X-Mas": token
+        }
+        headers_with_token = headers | dict_token
+        response = requests.get(url, headers=headers_with_token)
+        time.sleep(get_random_rate_sleep(1, 3))
         return response
 
         
