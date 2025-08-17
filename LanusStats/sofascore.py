@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 import time
-from .functions import get_possible_leagues_for_page, get_proxy, pd, uc, Options, get_random_rate_sleep
+from .functions import get_possible_leagues_for_page, pd, uc, get_random_rate_sleep
 from .exceptions import InvalidStrType, MatchDoesntHaveInfo, PlayerDoesntHaveInfo
 from faker import Faker
 from faker.providers import user_agent
@@ -70,7 +70,7 @@ class SofaScore:
             'errorLeadToShot',
             'passToAssist'
             ]
-        self.base_url = 'https://api.sofascore.com/'
+        self.base_url = 'https://www.sofascore.com/'
 
     def get_match_id(self, match_url):
         """Get match id for any match
@@ -97,28 +97,29 @@ class SofaScore:
 
         path = f"{self.base_url}{path}"
 
-        resultado = get_proxy()
-        proxy_host = resultado.split(':')[0]
-        proxy_port = resultado.split(':')[-1]
-
-        chrome_options = Options()
-        chrome_options.add_argument('--proxy-server=http://{}:{}'.format(proxy_host, proxy_port))
-
+        chrome_options = uc.ChromeOptions()
+        chrome_options.add_argument("--headless=new")
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
         fake = Faker()
 
         user_agent = fake.chrome()
 
         chrome_options.add_argument(f'user-agent={user_agent}')
-        chrome_options.add_argument('accept-language=en-US,en;q=0.9')
+        driver = uc.Chrome(options=chrome_options)
 
-        driver = uc.Chrome(headless=True,use_subprocess=False,option=chrome_options)
-        driver.get(path)
-        soup = BeautifulSoup(driver.page_source, 'html.parser')
+        try:
+            driver.get(path)
+            time.sleep(3)
 
-        driver.close()
+            html = driver.page_source
 
+        finally:
+            driver.quit()
+        
+        soup = BeautifulSoup(html, 'html.parser')
         data = json.loads(soup.text)
-        time.sleep(get_random_rate_sleep(3, 5))
+        time.sleep(get_random_rate_sleep(2, 6))
         return data
 
     def get_match_data(self, match_url):
