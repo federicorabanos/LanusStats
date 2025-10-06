@@ -579,6 +579,12 @@ def get_possible_leagues(league, season, page):
                     "20/21": 32502, "21/22": 37225, "22/23": 42410, "23/24": 52563, "24/25": 62048,
                     "25/26": 77558
                 }
+            },
+            "Primera RFEF": {
+                "id": 17073,
+                "seasons": {
+                    "24/25": 64430, "25/26": 77727
+                }
             }
         },
         '365Scores': {
@@ -934,4 +940,5 @@ def get_proxy():
 
 def get_random_rate_sleep(min, max):
     limit = random.uniform(min, max)
+
     return limit
