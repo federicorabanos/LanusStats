@@ -2,12 +2,14 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import urllib
 import numpy as np
-from mplsoccer import PyPizza, add_image, FontManager, VerticalPitch, Pitch
+import os
+from mplsoccer import PyPizza, add_image, VerticalPitch, Pitch
 from PIL import Image
 from urllib.request import urlopen
 from matplotlib.patches import RegularPolygon
 import matplotlib.patheffects as path_effects
 from matplotlib.offsetbox import (OffsetImage,AnnotationBbox)
+from matplotlib.font_manager import FontProperties
 from .exceptions import MatchDoesntHaveInfo
 from .fbref import Fbref
 from .fotmob import FotMob
@@ -17,14 +19,15 @@ from .threesixfivescores import ThreeSixFiveScores
 from .transfermarkt import Transfermarkt
 fbref, fotmob, threesixfivescores, transfermarkt = Fbref(), FotMob(), ThreeSixFiveScores(), Transfermarkt()
 
-#Fonts
-font_normal = FontManager('https://raw.githubusercontent.com/googlefonts/roboto/main/'
-                            'src/hinted/Roboto-Regular.ttf')
-font_italic = FontManager('https://raw.githubusercontent.com/googlefonts/roboto/main/'
-                                'src/hinted/Roboto-Italic.ttf')
-font_bold = FontManager('https://raw.githubusercontent.com/google/fonts/main/apache/robotoslab/'
-                                'RobotoSlab[wght].ttf')
-title = FontManager('https://github.com/google/fonts/blob/main/ofl/bungeeinline/BungeeInline-Regular.ttf?raw=true')
+# Obtener la ruta del directorio actual del módulo
+current_dir = os.path.dirname(os.path.abspath(__file__))
+fonts_dir = os.path.join(current_dir, 'fonts')
+
+# Fonts usando FontProperties con archivos locales
+font_normal = FontProperties(fname=os.path.join(fonts_dir, 'Lato-Bold.ttf'))
+font_italic = FontProperties(fname=os.path.join(fonts_dir, 'Lato-Bold.ttf'))
+font_bold = FontProperties(fname=os.path.join(fonts_dir, 'Catamaran-ExtraBold.ttf'))
+title = FontProperties(fname=os.path.join(fonts_dir, 'BungeeInline-Regular.ttf'))
 
 def fbref_plot_player_percentiles(path, image=None, chart_stats=None, save_image=False, name_extra='', credit_extra=''):
     """Does a pizza plot with percentiles (eg: https://mplsoccer.readthedocs.io/en/latest/gallery/pizza_plots/plot_pizza_dark_theme.html#sphx-glr-gallery-pizza-plots-plot-pizza-dark-theme-py)
@@ -93,11 +96,11 @@ def fbref_plot_player_percentiles(path, image=None, chart_stats=None, save_image
         ),                               
         kwargs_params=dict(
             color="#F2F2F2", fontsize=10,
-            fontproperties=font_bold.prop, va="center"
+            fontproperties=font_bold, va="center"
         ),                               
         kwargs_values=dict(
             color="#F2F2F2", fontsize=11,
-            fontproperties=font_normal.prop, zorder=3,
+            fontproperties=font_normal, zorder=3,
             bbox=dict(
                 edgecolor="#000000", facecolor="cornflowerblue",
                 boxstyle="round,pad=0.2", lw=1
@@ -118,13 +121,13 @@ def fbref_plot_player_percentiles(path, image=None, chart_stats=None, save_image
         CREDIT_2 = "If the value of the bar is larger, it's in the highest values of the category"
         CREDIT_3 = "Player compared to positional peers in leagues of the same caliber over the last 365 days."
 
-    fig.text(0.99, 0.02, f"{CREDIT_1}\n{CREDIT_2}\n{CREDIT_3}", size=10, fontproperties=font_italic.prop, color="#F2F2F2",ha="right")
+    fig.text(0.99, 0.02, f"{CREDIT_1}\n{CREDIT_2}\n{CREDIT_3}", size=10, fontproperties=font_italic, color="#F2F2F2",ha="right")
 
     if chart_stats:
         #Add text near the rectangles
-        fig.text(0.34, 0.925, f"{chart_stats[0]}", size=16, fontproperties=font_bold.prop, color="#F2F2F2")
-        fig.text(0.492, 0.925, f"{chart_stats[1]}", size=16, fontproperties=font_bold.prop, color="#F2F2F2")
-        fig.text(0.662, 0.925, f"{chart_stats[2]}", size=16, fontproperties=font_bold.prop, color="#F2F2F2")
+        fig.text(0.34, 0.925, f"{chart_stats[0]}", size=16, fontproperties=font_bold, color="#F2F2F2")
+        fig.text(0.492, 0.925, f"{chart_stats[1]}", size=16, fontproperties=font_bold, color="#F2F2F2")
+        fig.text(0.662, 0.925, f"{chart_stats[2]}", size=16, fontproperties=font_bold, color="#F2F2F2")
 
         # add rectangles
         fig.patches.extend([
@@ -143,12 +146,12 @@ def fbref_plot_player_percentiles(path, image=None, chart_stats=None, save_image
         ])
         fig.text(
             0.515, 0.975, f"{name}{name_extra}", size=30,
-            ha="center", fontproperties=title.prop, color="#F2F2F2"
+            ha="center", fontproperties=title, color="#F2F2F2"
             )
     else:
         fig.text(
             0.515, 0.94, f"{name}{name_extra}", size=30,
-            ha="center", fontproperties=title.prop, color="#F2F2F2"
+            ha="center", fontproperties=title, color="#F2F2F2"
             )
 
     #Define image
@@ -279,7 +282,7 @@ def fotmob_hexbin_shotmap(league, season, player_id, credit_extra=' ', save_fig=
         xy=(34,109),
         xytext=(x_circle[-1], 109),
         text=f"{((105 - data['x'].median())*18)/16.5:.1f} m.",
-        fontproperties = font_normal.prop,
+        fontproperties = font_normal,
         size=10,
         color='red',
         ha='right',
@@ -295,7 +298,7 @@ def fotmob_hexbin_shotmap(league, season, player_id, credit_extra=' ', save_fig=
         xytext=(4,0),
         text=f"Distancia mediana de tiros",
         textcoords='offset points',
-        fontproperties = font_normal.prop,
+        fontproperties = font_normal,
         size=10,
         color='red',
         ha='left',
@@ -306,7 +309,7 @@ def fotmob_hexbin_shotmap(league, season, player_id, credit_extra=' ', save_fig=
     ax.annotate(
         xy=(34,116),
         text=f"{data['playerName'].iloc[0].upper()} - {team_name.upper()}",
-        fontproperties = title.prop,
+        fontproperties = title,
         size=12,
         color='black',
         ha='center',
@@ -322,7 +325,7 @@ def fotmob_hexbin_shotmap(league, season, player_id, credit_extra=' ', save_fig=
     ax.annotate(
         xy=(34,112.5),
         text=f"Tiros sin contar penales realizados en la {league} {season}\nVisualización{credit_extra}de la líbreria de LanusStats.",
-        fontproperties = font_normal.prop,
+        fontproperties = font_normal,
         size=8,
         color='grey',
         ha='center',
