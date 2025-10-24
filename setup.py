@@ -5,7 +5,7 @@ HERE = pathlib.Path(__file__).parent
 
 
 VERSION = '1.8.7'
-PACKAGE_NAME = 'LanusStats'
+PACKAGE_NAME = 'lanusstats'
 AUTHOR = 'Federico Rábanos'
 AUTHOR_EMAIL = 'lanusstats@gmail.com'
 URL = 'https://github.com/federicorabanos'
