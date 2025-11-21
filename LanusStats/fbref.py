@@ -1,13 +1,24 @@
 import warnings
 warnings.filterwarnings("ignore")
-import http.client
 from bs4 import BeautifulSoup, Comment
 import pandas as pd
 from datetime import datetime
 import time
 import numpy as np
+import asyncio
+import json
+import atexit
+from concurrent.futures import ThreadPoolExecutor
+from pydoll.browser import Chrome
 from .functions import get_possible_leagues_for_page, possible_stats_exception
 from .exceptions import PlayerDoesntHaveInfo, MatchDoesntHaveInfo
+
+if '_HTML_FETCH_EXECUTOR' not in globals():
+    _HTML_FETCH_EXECUTOR = ThreadPoolExecutor(max_workers=2)
+    atexit.register(_HTML_FETCH_EXECUTOR.shutdown, wait=False)
+
+_PAGE_READY_TIMEOUT = 12
+_PAGE_READY_POLL_INTERVAL = 0.4
 
 class Fbref:
 
@@ -59,41 +70,56 @@ class Fbref:
         """
         
         print("Starting to scrape teams data from Fbref...")
-        possible_stats_exception(self.possible_stats, stat)     
+        possible_stats_exception(self.possible_stats, stat)
         leagues = get_possible_leagues_for_page(league, season, 'Fbref')
         
-        if league == 'Big 5 European Leagues':
+        if league == 'Big 5 European Leagues' and season is None:
             path = f'https://fbref.com/en/comps/{leagues[league]["id"]}/{stat}/squads/{leagues[league]["slug"]}-Stats'
-        elif season != None:
-            path = f'https://fbref.com/en/comps/{leagues[league]["id"]}/{season}/{stat}/{season}/{leagues[league]["slug"]}-Stats'
-        elif season != None and league == 'Big 5 European Leagues':
+        elif league == 'Big 5 European Leagues' and season is not None:
             path = f'https://fbref.com/en/comps/{leagues[league]["id"]}/{season}/{stat}/squads/{season}/{leagues[league]["slug"]}-Stats'
+        elif season is not None:
+            path = f'https://fbref.com/en/comps/{leagues[league]["id"]}/{season}/{stat}/{season}/{leagues[league]["slug"]}-Stats'
         else:
             path = f'https://fbref.com/en/comps/{leagues[league]["id"]}/{stat}/{leagues[league]["slug"]}-Stats'
-            
         
-        today = datetime.now().strftime('%Y-%m-%d')
-        time.sleep(3)
+        time.sleep(2)
         
-        df_total = pd.read_html(path)
+        html_content = self.fbref_request(path)
+        soup = BeautifulSoup(html_content, 'html.parser')
 
-        if stats_vs:
-              data = df_total[1]
-        else:
-              data = df_total[0]
-        
+        df = pd.DataFrame()
+        normalized_stat = stat.rstrip('s') or stat
+        base_table_id = f"stats_squads_{normalized_stat}"
+        preferred_ids = [
+            f"{base_table_id}_{'against' if stats_vs else 'for'}",
+            base_table_id,
+        ]
+
+        for table_id in preferred_ids:
+            df = self._build_dataframe_from_soup(soup, table_id=table_id)
+            if not df.empty:
+                break
+        if df.empty:
+            df = self._build_dataframe_from_soup(soup)
+        if df.empty:
+            return df
+
+        df = df.applymap(self._fix_encoding)
+
         if change_columns_names:
-            data.columns = data.columns \
-                            .map(lambda x: x[1] if 'Unnamed:' in x[0] else '_'.join([part.replace(' ', '') for part in x]))
-            if add_page_name:
-                new_columns = [f'{stat}_' + col for col in data.columns]
-                data.columns = new_columns
-        else:
-            data.columns = data.columns.droplevel(0)
+            df.columns = [
+                '_'.join(part.strip().replace(' ', '') for part in col.split())
+                if isinstance(col, str) else col
+                for col in df.columns
+            ]
+
+        if add_page_name:
+            df.columns = [f'{stat}_' + col if col else col for col in df.columns]
 
         if save_csv:
-              data.to_csv(f'{league} - {stat} - {today}.csv')
-        return data
+            today = datetime.now().strftime('%Y-%m-%d')
+            df.to_csv(f'{league} - {stat} - {today}.csv', index=False)
+        return df
 
     def get_vs_and_teams_season_stats(self, stat, league, season=None, save_excel=False, change_columns_names=False, add_page_name=False):
         """Get For and VS Stats for a team in a season. The two tables show in any stat for any team in a league.
@@ -124,7 +150,7 @@ class Fbref:
     
     def concatenate_teams_df(self, df, df_vs, axis=1):
         df_total = pd.concat([df, df_vs], axis=axis)
-
+    
         return df_total
         
     def get_all_teams_season_stats(self, league, season, save_csv=False, stats_vs=False, change_columns_names=False, add_page_name=False):
@@ -146,38 +172,181 @@ class Fbref:
         return soup.find_all('table')[0]
 
     def parse_row(self, row):
-            cols = None
-            cols = row.find_all('td')
-            cols = [ele.text.strip() for ele in cols]
-            return cols
+        """Extract all <td> values from a player row."""
+        cols = row.find_all('td')
+        cols = [ele.text.strip() for ele in cols]
+        return cols
+
+    def _parse_team_row(self, row):
+        """Return a row as [Squad, ...stats...] including squad name from the header."""
+        th = row.find('th', attrs={'data-stat': 'squad'}) or row.find('th', scope='row')
+        if th:
+            squad = th.get_text(strip=True)
+        else:
+            header = row.find('th')
+            squad = header.get_text(strip=True) if header else ''
+
+        cols = [ele.get_text(strip=True) for ele in row.find_all('td')]
+        parsed = [squad] + cols
+        return parsed if any(parsed) else None
+
+    def _collect_headings(self, table):
+        """Collect column headings from <thead>, skipping helper headers."""
+        source = table.find('thead') or table
+        headings = []
+        for th in source.find_all('th'):
+            if 'over_header' in th.get('class', []):
+                continue
+            scope = th.get('scope')
+            if scope and scope not in {'col', 'colgroup'}:
+                continue
+            text = th.get_text(strip=True)
+            if text:
+                headings.append(text)
+        if headings and (headings[0] == '' or headings[0].isdigit()):
+            headings = headings[1:]
+        return headings
+
+    def _extract_tables(self, soup):
+        """Return the soup/tables tuple, falling back to HTML comments if needed."""
+        direct_tables = soup.find_all('table')
+        if direct_tables:
+            return soup, direct_tables
+        for comment in soup.find_all(string=lambda text: isinstance(text, Comment)):
+            extracted = BeautifulSoup(comment, 'html.parser')
+            comment_tables = extracted.find_all('table')
+            if comment_tables:
+                return extracted, comment_tables
+        return soup, []
+
+    def _build_dataframe_from_soup(self, soup, table_id=None):
+        """Build a DataFrame from a soup, optionally targeting a specific table id."""
+        target_table = None
+        working_soup, tables = self._extract_tables(soup)
+
+        if table_id:
+            target_table = working_soup.find('table', id=table_id)
+            if not target_table:
+                for comment in soup.find_all(string=lambda text: isinstance(text, Comment)):
+                    extracted = BeautifulSoup(comment, 'html.parser')
+                    target_table = extracted.find('table', id=table_id)
+                    if target_table:
+                        working_soup = extracted
+                        break
+            if target_table:
+                tables = [target_table]
+
+        if not tables:
+            working_soup, tables = self._extract_tables(working_soup)
+        if not tables:
+            return pd.DataFrame()
+
+        if not target_table:
+            target_table = next(
+                (
+                    table
+                    for table in tables
+                    if all(keyword in table.get_text() for keyword in ("Playing Time", "Performance", "Penalty Kicks"))
+                ),
+                tables[0],
+            )
+
+        headings = self._collect_headings(target_table)
+        body = target_table.find('tbody') or target_table
+        rows = []
+        for row in body.find_all('tr'):
+            parsed = self._parse_team_row(row)
+            if parsed:
+                rows.append(parsed)
+
+        if not headings or not rows:
+            return pd.DataFrame()
+
+        max_cols = max(len(headings), max(len(row) for row in rows))
+        if len(headings) < max_cols:
+            headings = [''] * (max_cols - len(headings)) + headings
+
+        aligned_rows = [row + [''] * (max_cols - len(row)) for row in rows]
+        df = pd.DataFrame(aligned_rows, columns=headings[:max_cols])
+        return df.replace('', pd.NA).dropna(how='all').reset_index(drop=True)
+
+    def _fix_encoding(self, value):
+        """Best-effort fix for strings that arrived double-encoded (Ã, â, etc.)."""
+        if isinstance(value, str) and any(marker in value for marker in ("Ã", "Â", "¢", "â")):
+            try:
+                return value.encode("latin1").decode("utf-8")
+            except UnicodeEncodeError:
+                return value
+        return value
     
     def fbref_request(self, url):
-        host = "fbref.com"
+        """Obtiene el HTML de una página de FBref usando un navegador headless.
+        
+        Args:
+            url (str): URL completa o path relativo de la página de FBref.
+                      Si es relativo (empieza con '/'), se construye la URL completa.
+        
+        Returns:
+            str: HTML completo de la página.
+        """
+        if url.startswith('/'):
+            full_url = f'https://fbref.com{url}'
+        else:
+            full_url = url
 
-        fbref_headers = {
-            "Host": host,
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-            "Referer": "https://fbref.com/",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-            "Accept-Language": "en-US,en;q=0.5",
-            "Connection": "keep-alive",
-        }
+        async def _wait_for_page(tab, timeout=_PAGE_READY_TIMEOUT):
+            loop = asyncio.get_running_loop()
+            deadline = loop.time() + timeout
+            while True:
+                ready_state = await tab.execute_script("return document.readyState")
+                if ready_state == "complete":
+                    body_length = await tab.execute_script(
+                        "return document.body ? document.body.innerHTML.length : 0;"
+                    )
+                    if isinstance(body_length, (int, float)) and body_length > 0:
+                        break
+                if loop.time() >= deadline:
+                    break
+                await asyncio.sleep(_PAGE_READY_POLL_INTERVAL)
+        
+        async def _get_html():
+            async with Chrome() as browser:
+                tab = await browser.start()
+                await tab.go_to(full_url)
 
-        conn = http.client.HTTPSConnection(host)
+                await _wait_for_page(tab)
+
+                result = await tab.execute_script(
+                    "return document.documentElement.outerHTML;"
+                )
+
+                if isinstance(result, dict):
+                    value = (
+                        result.get("result", {})
+                            .get("result", {})
+                            .get("value")
+                    )
+                    if isinstance(value, str):
+                        html = value
+                    else:
+                        html = json.dumps(result, ensure_ascii=False)
+                else:
+                    html = result
+
+                html = html.encode("utf-8", "ignore").decode("unicode_escape")
+
+                return html
+
+        def _execute_fetch():
+            return asyncio.run(_get_html())
 
         try:
-            conn.request("GET", url, headers=fbref_headers)
-            
-            response = conn.getresponse()
-
-            html = response.read().decode("utf-8", errors="ignore")
-        except Exception as e:
-            print(f"Error en la solicitud: {e}")
-
-        finally:
-            conn.close()
-        
-        return html
+            asyncio.get_running_loop()
+        except RuntimeError:
+            return _execute_fetch()
+        else:
+            future = _HTML_FETCH_EXECUTOR.submit(_execute_fetch)
+            return future.result()
          
     def get_player_season_stats(self, stat, league, season=None, save_csv=False, add_page_name=False):
         """Get players season stats for a particular stat.
@@ -194,7 +363,7 @@ class Fbref:
         """
         
         print("Starting to scrape player data from Fbref...")
-        possible_stats_exception(self.possible_stats, stat)
+        #possible_stats_exception(self.possible_stats, stat)
         
         leagues = get_possible_leagues_for_page(league, season, 'Fbref')
         
@@ -217,11 +386,11 @@ class Fbref:
         response = self.fbref_request(path)
         soup = BeautifulSoup(response, "html.parser")
         data = []
-        headings=[]
+        headings = []
         
         if league != 'Big 5 European Leagues':
             comment = soup.find_all(text=lambda t: isinstance(t, Comment))
-            comment_number=0
+            comment_number = 0
             for i in range(len(comment)):
                 if comment[i].find('\n\n<div class="table_container"') != -1:
                     comment_number = i
@@ -229,39 +398,40 @@ class Fbref:
             table = comment_table.find('table')
             table_html = BeautifulSoup(comment_table[table:], 'html.parser')
             table = self.get_table(table_html)
-            headtext = table_html.find_all("th",scope="col")
+            headtext = table_html.find_all("th", scope="col")
         else:
             table = self.get_table(soup)
-            headtext = soup.find_all("th",scope="col")
+            headtext = soup.find_all("th", scope="col")
         
-        for i in range(len(headtext)):
-            heading = headtext[i].get_text()
+        for header in headtext:
+            heading = header.get_text()
             headings.append(heading)
-        headings=headings[1:len(headings)]
+        headings = headings[1:len(headings)]
         data.append(headings)
         table_body = table.find('tbody')
         rows = table_body.find_all('tr')
 
-        for row_index in range(len(rows)):
-            row = rows[row_index]
+        for row in rows:
             cols = self.parse_row(row)
             data.append(cols)
          
         df_data = pd.DataFrame(data)
         df_data = df_data.rename(columns=df_data.iloc[0])
         df_data = df_data.reindex(df_data.index.drop(0))
-        df_data = df_data.replace('',0).drop(columns=['Matches'])
+        df_data = df_data.replace('', 0)
+        if 'Matches' in df_data.columns:
+            df_data = df_data.drop(columns=['Matches'])
         if league != 'Big 5 European Leagues':
             df_data.insert(4, 'Comp', [league]*len(df_data))
         df_data = df_data.dropna().reset_index(drop=True)
-
+        df_data = df_data.applymap(self._fix_encoding)
 
         if add_page_name:
-                new_columns = [f'{stat}_' + col if col != 'Player' else col for col in df_data.columns]
-                df_data.columns = new_columns
+            new_columns = [f'{stat}_' + col if col != 'Player' else col for col in df_data.columns]
+            df_data.columns = new_columns
 
         if save_csv:
-              df_data.to_csv(f'{league} - {stat} - {today}.csv')
+            df_data.to_csv(f'{league} - {stat} - {today}.csv')
         
         return df_data
 
