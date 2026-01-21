@@ -23,11 +23,21 @@ fbref, fotmob, threesixfivescores, transfermarkt = Fbref(), FotMob(), ThreeSixFi
 current_dir = os.path.dirname(os.path.abspath(__file__))
 fonts_dir = os.path.join(current_dir, 'fonts')
 
-# Fonts usando FontProperties con archivos locales
-font_normal = FontProperties(fname=os.path.join(fonts_dir, 'Lato-Bold.ttf'))
-font_italic = FontProperties(fname=os.path.join(fonts_dir, 'Lato-Bold.ttf'))
-font_bold = FontProperties(fname=os.path.join(fonts_dir, 'Catamaran-ExtraBold.ttf'))
-title = FontProperties(fname=os.path.join(fonts_dir, 'BungeeInline-Regular.ttf'))
+# Helper to load local font with a safe fallback to a generic family
+def _load_font(filename, fallback_family='sans-serif'):
+    path = os.path.join(fonts_dir, filename)
+    if os.path.isfile(path):
+        try:
+            return FontProperties(fname=path)
+        except Exception:
+            return FontProperties(family=fallback_family)
+    return FontProperties(family=fallback_family)
+
+# Fonts usando FontProperties con archivos locales (con fallback si faltan)
+font_normal = _load_font('Lato-Bold.ttf')
+font_italic = _load_font('Lato-Bold.ttf')
+font_bold = _load_font('Catamaran-ExtraBold.ttf')
+title = _load_font('BungeeInline-Regular.ttf')
 
 def fbref_plot_player_percentiles(path, image=None, chart_stats=None, save_image=False, name_extra='', credit_extra=''):
     """Does a pizza plot with percentiles (eg: https://mplsoccer.readthedocs.io/en/latest/gallery/pizza_plots/plot_pizza_dark_theme.html#sphx-glr-gallery-pizza-plots-plot-pizza-dark-theme-py)
@@ -202,7 +212,7 @@ def fotmob_match_momentum_plot(match_id, save_fig=False):
 
     return fig, ax
 
-def fotmob_hexbin_shotmap(league, season, player_id, credit_extra=' ', save_fig=False):
+def fotmob_hexbin_shotmap(season_index, competition_index, player_id, credit_extra=' ', save_fig=False):
     """Gets a player, league and season and plots an hexbin plot of the shots that player took in that tournament according to FotMob page.
     Inspired and most of the code is by: https://github.com/sonofacorner/soc-viz-of-the-week
 
@@ -215,7 +225,7 @@ def fotmob_hexbin_shotmap(league, season, player_id, credit_extra=' ', save_fig=
         credit_extra (str, optional): If you want to add your name or handle. Defaults to ' '.
         save_fig (bool, optional): Saves the image to a png. Defaults to False.
     """
-    df = fotmob.get_player_shotmap(league, season, player_id)
+    df = fotmob.get_player_shotmap(season_index, competition_index, player_id)
     
     df = df[df['situation'] != 'Penalty']
     
@@ -240,7 +250,6 @@ def fotmob_hexbin_shotmap(league, season, player_id, credit_extra=' ', save_fig=
     pitch.draw(ax = ax)
 
     bins = pitch.hexbin(x=data['x'], y=data['y'], ax=ax, cmap=soc_cm, gridsize=(14,14), zorder=-1, edgecolors='#efe9e6', alpha=0.9, lw=.25)
-
     x_circle, y_circle = semicircle(104.8 - data['x'].median(), 34, 104.8)  # function call
     ax.plot(x_circle, y_circle, ls='--', color='red', lw=.75)
 
@@ -324,7 +333,7 @@ def fotmob_hexbin_shotmap(league, season, player_id, credit_extra=' ', save_fig=
     
     ax.annotate(
         xy=(34,112.5),
-        text=f"Tiros sin contar penales realizados en la {league} {season}\nVisualización{credit_extra}de la líbreria de LanusStats.",
+        text=f"Tiros sin contar penales realizados\nVisualización{credit_extra}de la líbreria de LanusStats.",
         fontproperties = font_normal,
         size=8,
         color='grey',
@@ -355,7 +364,7 @@ def fotmob_hexbin_shotmap(league, season, player_id, credit_extra=' ', save_fig=
     image_ax.axis('off')
 
     if save_fig:
-        plt.savefig(f"{data['playerName'].iloc[0]} hexbix plot.png", dpi=300, bbox_inches='tight')
+        plt.savefig(f"{data['playerName'].iloc[0]} hexbin plot.png", dpi=300, bbox_inches='tight')
 
 def threesixfivescores_match_shotmap(match_url, save_fig=False):
     """Makes a shotmap with a URL match from 365Scores
