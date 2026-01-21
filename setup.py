@@ -4,7 +4,7 @@ from setuptools import find_packages, setup
 HERE = pathlib.Path(__file__).parent
 
 
-VERSION = '1.9.0'
+VERSION = '1.9.1'
 PACKAGE_NAME = 'lanusstats'
 AUTHOR = 'Federico Rábanos'
 AUTHOR_EMAIL = 'lanusstats@gmail.com'
@@ -31,6 +31,7 @@ setup(
     install_requires=INSTALL_REQUIRES,
     license=LICENSE,
     packages=find_packages(),
-    include_package_data=True
+    include_package_data=True,
+    package_data={'LanusStats': ['fonts/*.ttf']}
 )
 
