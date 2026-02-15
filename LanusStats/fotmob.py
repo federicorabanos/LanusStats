@@ -146,7 +146,6 @@ class FotMob:
         time.sleep(get_random_rate_sleep(1, 3))
         return response
 
-        
     def get_season_tables(self, league, season, table = ['all', 'home', 'away', 'form', 'xg']):
         """Get standing tables from a list of possible ones from a certain season in a league.
 
@@ -311,6 +310,25 @@ class FotMob:
                 .dropna(subset=['home', 'away'])
         return total_df
     
+    def get_player_season_stats(self, season_index, competition_index, player_id):
+        """Scrape a player stats from a certain league and season, if they have one.
+
+        Args:
+            season_index (str): Position of the season in the dropdown on FotMob UI
+            competition_index (str): Position of the competition in a season in the dropdown on FotMob UI
+            player_id (str): FotMob Id of a player. Could be found in the URL of a specific player.
+                             Example: https://www.fotmob.com/es/players/727095/ignacio-ramirez
+                             727095 is the player_id.
+
+        Returns:
+            response: json with the data for all the stats shown in the FotMob UI.
+
+        """
+        path = f'playerStats?playerId={player_id}&seasonId={season_index}-{competition_index}&isFirstSeason=false'
+        response = self.fotmob_request(path)
+        return response.json()
+
+
     def get_player_shotmap(self, season_index, competition_index, player_id):
         """Scrape a player shotmap from a certain league and season, if they have one.
 
@@ -324,10 +342,50 @@ class FotMob:
         Returns:
             shotmap: DataFrame with the data for all the shots shown in the FotMob UI.
         """
-        path = f'playerStats?playerId={player_id}&seasonId={season_index}-{competition_index}&isFirstSeason=false'
-        response = self.fotmob_request(path)
+        response = self.get_player_seasons_stats(season_index, competition_index, player_id)
         try:
-            shotmap = pd.DataFrame(response.json()['shotmap'])
+            shotmap = pd.DataFrame(response['shotmap'])
         except TypeError:
             raise MatchDoesntHaveInfo(player_id)
         return shotmap
+
+    def get_player_percentiles(self, season_index, competition_index, player_id):
+        """
+        Scrape a player percentiles from a certain league and season, if they have one.
+
+        Args:
+            season_index (str): Position of the season in the dropdown on FotMob UI
+            competition_index (str): Position of the competition in a season in the dropdown on FotMob UI
+            player_id (str): FotMob Id of a player. Could be found in the URL of a specific player.
+                             Example: https://www.fotmob.com/es/players/727095/ignacio-ramirez
+                             727095 is the player_id.
+
+        Returns:
+            df_percentiles: DataFrame with the data for all the percentiles shown in the FotMob UI.
+        """
+
+        response = self.get_player_seasons_stats(season_index, competition_index, player_id)
+        try:
+            stats = pd.DataFrame(response['statsSection']['items'])
+            df_exploded = stats.explode('items')
+            df_percentiles = pd.json_normalize(df_exploded["items"])
+        except TypeError:
+            raise MatchDoesntHaveInfo(player_id)
+        return df_percentiles
+
+    def get_player_data(self, player_id):
+        """
+        Scrape a player data.
+
+        Args:
+            player_id (str): FotMob Id of a player. Could be found in the URL of a specific player.
+                             Example: https://www.fotmob.com/es/players/727095/ignacio-ramirez
+                             727095 is the player_id.
+
+        Returns:
+            json_data: json with the data available of a player.
+        """
+        path = f'/data/playerData?id={fotmob_player_id}'
+        response = self.fotmob_request(path)
+        json_data = response.json()
+        return json_data
