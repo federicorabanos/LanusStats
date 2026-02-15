@@ -364,7 +364,7 @@ class FotMob:
             df_percentiles: DataFrame with the data for all the percentiles shown in the FotMob UI.
         """
 
-        response = self.get_player_seasons_stats(season_index, competition_index, player_id)
+        response = self.get_player_season_stats(season_index, competition_index, player_id)
         try:
             stats = pd.DataFrame(response['statsSection']['items'])
             df_exploded = stats.explode('items')
@@ -385,7 +385,7 @@ class FotMob:
         Returns:
             json_data: json with the data available of a player.
         """
-        path = f'/data/playerData?id={fotmob_player_id}'
+        path = f'/data/playerData?id={player_id}'
         response = self.fotmob_request(path)
         json_data = response.json()
         return json_data
