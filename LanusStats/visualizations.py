@@ -11,13 +11,13 @@ import matplotlib.patheffects as path_effects
 from matplotlib.offsetbox import (OffsetImage,AnnotationBbox)
 from matplotlib.font_manager import FontProperties
 from .exceptions import MatchDoesntHaveInfo
-from .fbref import Fbref
+from .sofascore import SofaScore
 from .fotmob import FotMob
 from .functions import semicircle
 from .config import soc_cm
 from .threesixfivescores import ThreeSixFiveScores
 from .transfermarkt import Transfermarkt
-fbref, fotmob, threesixfivescores, transfermarkt = Fbref(), FotMob(), ThreeSixFiveScores(), Transfermarkt()
+fotmob, threesixfivescores, transfermarkt, sofascore = FotMob(), ThreeSixFiveScores(), Transfermarkt(), SofaScore()
 
 # Obtener la ruta del directorio actual del módulo
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -39,8 +39,10 @@ font_italic = _load_font('Lato-Bold.ttf')
 font_bold = _load_font('Catamaran-ExtraBold.ttf')
 title = _load_font('BungeeInline-Regular.ttf')
 
-def fbref_plot_player_percentiles(path, image=None, chart_stats=None, save_image=False, name_extra='', credit_extra=''):
-    """Does a pizza plot with percentiles (eg: https://mplsoccer.readthedocs.io/en/latest/gallery/pizza_plots/plot_pizza_dark_theme.html#sphx-glr-gallery-pizza-plots-plot-pizza-dark-theme-py)
+"""def fbref_plot_player_percentiles(path, image=None, chart_stats=None, save_image=False, name_extra='', credit_extra=''):
+    Deprecated as fbref changed data
+    
+    Does a pizza plot with percentiles (eg: https://mplsoccer.readthedocs.io/en/latest/gallery/pizza_plots/plot_pizza_dark_theme.html#sphx-glr-gallery-pizza-plots-plot-pizza-dark-theme-py)
     for a specific player, if they have their percentiles in their fbref page.
 
     Args:
@@ -50,7 +52,6 @@ def fbref_plot_player_percentiles(path, image=None, chart_stats=None, save_image
         save_image (bool, optional): Saves a png of the plot. Defaults to False.
         name_extra (str, optional): Something to add to the title. Defaults to ''.
         credit_extra (str, optional): Something to add to the credits. Defaults to ''.
-    """
     
     #Define player dataframe and also colors of the plot
     print('Gettings player percentiles...')
@@ -174,7 +175,8 @@ def fbref_plot_player_percentiles(path, image=None, chart_stats=None, save_image
     if save_image:
         print('Saving image...')
         plt.savefig(f'{name} fbref percentile plot.png', dpi=300, bbox_inches='tight')
-        
+"""    
+
 def fotmob_match_momentum_plot(match_id, save_fig=False):
     """Plot Match Momentum
     Args:
@@ -450,3 +452,135 @@ def transfermarkt_player_market_value(transfermarkt_player_id, save_fig=False, p
     plt.title(f'Valor de mercado de {player_name} a lo largo de su carrera. Fuente: Transfermarkt', size=20, pad=25)
     if save_fig:
         plt.savefig(f'{player_name} market value.png', bbox_inches='tight', dpi=300)
+
+def sofascore_plot_match_events(match_url, player, events=None, dashboard=False, save_fig=False):
+    df_events = sofascore.get_player_match_events(match_url, player, events=events)
+    trad_event = {
+                'passes': "Pases",
+                'ball-carries': 'Carreras',
+                'dribbles': "Amagues",
+                'defensive': "Acciones defensivas"
+            }
+    if dashboard:
+        pitch = VerticalPitch(pitch_type='opta', goal_type='box')
+        fig, axs = pitch.grid(
+            nrows=2, ncols=2, 
+            grid_height=0.88,    
+            title_height=0.06,  
+            endnote_height=0.02, 
+            axis=False, 
+            title_space=0.02
+        )
+        fig.set_size_inches(12, 16)
+        axes = axs['pitch'].flatten()
+        categories = ['passes', 'ball-carries', 'dribbles', 'defensive']
+    else:
+        categories = df_events.category.unique()
+        axes = [None] * len(categories)
+
+    for i, event in enumerate(categories):
+        if not dashboard:
+            fig, ax = plt.subplots(figsize=(16,9))
+            pitch = Pitch(pitch_type='opta', goal_type='box')
+            pitch.draw(ax=ax)
+        else:
+            ax = axes[i]
+            pitch.draw(ax=ax)
+            ax.set_title(trad_event[event].upper(), fontsize=20, fontproperties=font_bold)
+
+        if event in ['passes', 'dribbles']:
+            df_plot = df_events[df_events['category'] == event]
+            successful = df_plot[df_plot['outcome'] == True]
+            unsuccessful = df_plot[df_plot['outcome'] != True]
+            pitch.arrows(
+                successful.x,
+                successful.y,
+                successful.end_x,
+                successful.end_y,
+                color = 'green',
+                linewidth = 1, headwidth=2.5, headlength=3,width=3,
+                alpha=.8,
+                label='Completados',
+                ax=ax
+            )
+
+            pitch.arrows(
+                unsuccessful.x,
+                unsuccessful.y,
+                unsuccessful.end_x,
+                unsuccessful.end_y,
+                color = 'red',
+                ax=ax,
+                linewidth = 1, headwidth=2.5, headlength=3,width=3,
+                alpha=.6,
+                label='Fallidos'
+            )
+            if not dashboard:
+                ax.legend(loc='lower center', ncol=5, fontsize=10)
+            else:
+                ax.legend(loc='upper right', ncol=1, fontsize=10)
+
+        if save_fig:
+            plt.savefig(f'{event}_{player}.png', dpi=300, bbox_inches='tight')
+            
+        elif event in ['ball-carries']:
+            df_plot = df_events[df_events['category'] == event]
+            pitch.arrows(
+                df_plot.x,
+                df_plot.y,
+                df_plot.end_x,
+                df_plot.end_y,
+                color = 'black',
+                linewidth = 1, headwidth=2.5, headlength=3,width=3,
+                label='Carreras',
+                ax=ax
+            )
+            if not dashboard:
+                ax.legend(loc='lower center', ncol=5, fontsize=10)
+            else:
+                ax.legend(loc='upper right', ncol=1, fontsize=10)
+            if save_fig:
+                plt.savefig(f'{event}_{player}.png', dpi=300, bbox_inches='tight')
+            
+        elif event in ['defensive']:
+            df_plot = df_events[df_events['category'] == event]
+            successful = df_plot[df_plot['outcome'] == True]
+            color_map = {
+                'ball-recovery': '#2ecc71',  
+                'interception': '#e67e22',   
+                'tackle': 'red',          
+                'clearance': '#9b59b6',        
+                'block': 'black'
+            }
+
+            trad = {
+                'ball-recovery': 'Recuperación',
+                'interception': 'Intercepción',   
+                'tackle': 'Entrada',          
+                'clearance': 'Despeje',        
+                'block': 'Tiro bloqueado'
+            }
+
+            for action, group in successful.groupby('eventActionType'):
+                pitch.scatter(
+                    group.x, 
+                    group.y, 
+                    color=color_map.get(action, 'black'), 
+                    label=trad.get(action, action),                                         
+                    edgecolors='white',                   
+                    linewidth=1,
+                    s=100,                                
+                    ax=ax
+                )
+            if not dashboard:
+                ax.legend(loc='lower center', ncol=5, fontsize=10)
+            else:
+                ax.legend(loc='upper right', ncol=1, fontsize=10)
+            if save_fig:
+                plt.savefig(f'{event}_{player}.png', dpi=300, bbox_inches='tight')
+
+    if dashboard:
+        fig.suptitle(f"Eventos de partido: {player}", fontsize=30, fontproperties=title)
+
+    if dashboard and save_fig:
+        plt.savefig(f'dashboard_{player}.png', dpi=300, bbox_inches='tight')

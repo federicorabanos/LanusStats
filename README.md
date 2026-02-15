@@ -81,15 +81,9 @@ Y si quiero scrapear todas las estadísticas en una
 get_all_player_season_stats("Copa de la Liga", "2024", save_csv=False, add_page_name=False)
 ```
 
-* Del perfil de un jugar se puede sacar los percentiles y las similutdes (si las tiene)
-```bash
-get_player_percentiles("https://fbref.com/en/players/bc7dc64d/Bukayo-Saka")
-get_player_similarities("https://fbref.com/en/players/bc7dc64d/Bukayo-Saka")
-```
 
 * De un partido en particular se puede sacar los tiros y las estadísticas generales (si las tiene)
 ```bash
-get_match_shots("https://fbref.com/en/matches/77d7e2d6/Arsenal-Luton-Town-April-3-2024-Premier-League")
 get_general_match_team_stats("https://fbref.com/en/matches/77d7e2d6/Arsenal-Luton-Town-April-3-2024-Premier-League")
 ```
 
@@ -138,9 +132,9 @@ get_general_match_stats(4193851)
 
 Aclaración: El id de parametro es el que se encuentra en la url, ejemplo: https://www.fotmob.com/es/matches/afc-bournemouth-vs-manchester-united/2yrx85#4193851
 
-* También puedes obtener información de un jugador:
+* También puedes obtener información de un jugador([ejemplo](https://www.fotmob.com/es/players/1203665/alejandro-garnacho)):
 
-** Mapa de tiros ([ejemplo](https://www.fotmob.com/es/players/1203665/alejandro-garnacho)):
+** Mapa de tiros:
 ```bash
 get_player_shotmap("1", "0", 1203665)
 ```
@@ -148,6 +142,19 @@ El 3º parametro es el id que se encuentra en la url, ejemplo: https://www.fotmo
 El primer y segundo parametro salen del dropdown de la página de FotMob:
 - El primero es la posición de la temporada en el dropdown, arrancando desde el 0. Es decir, si quiero de la primera temporada que aparece en el dropdown, el valor será 0, si es de la 2º, será 1 y así sucesivamente.  
 - El segundo es la posición de la competición dentro de una temporada. La que aparezca primera será 0 y asi.
+
+** De la misma manera funcionan las siguientes funciones:
+```bash
+get_player_percentiles("1", "0", 1203665)
+get_player_season_stats("1", "0", 1203665)
+```
+
+** Para sacar toda la información que tiene FotMob de un jugador:
+```bash
+get_player_data(1203665)
+```
+El parametro es el id que se encuentra en la url, ejemplo: https://www.fotmob.com/es/players/1203665/alejandro-garnacho  
+
 
 ## [365 Scores](https://github.com/federicorabanos/LanusStats/blob/main/LanusStats/threesixfivescores.py)
 ```bash
@@ -188,11 +195,16 @@ Aclaración, te devuelve una lista de dataframes, el primero (ó [0]) es del loc
 get_lineups("https://www.sofascore.com/arsenal-manchester-united/KR#id:11352532")
 ```
 
-* Por último dentro de un partido podes sacar el mapa de calor de cada uno dentro del partido:
+* Por último dentro de un partido podes sacar el mapa de calor o de eventos de cada uno dentro del partido:
 ```bash
 get_player_heatmap("https://www.sofascore.com/arsenal-manchester-united/KR#id:11352532", "Alejandro Garnacho")
 ```
 Aclaración: el nombre del jugador debe ser tal cual lo muestra SofaScore.
+
+```bash
+get_player_match_events("https://www.sofascore.com/arsenal-manchester-united/KR#id:11352532", "Alejandro Garnacho", events=None)
+```
+Aclaración: el parámetro de events puede ser alguno de ['passes', 'ball-carries', 'dribbles', 'defensive'] (en lista) si se quiere solo traer una o más categorías de eventos. Sino, no pasar nada.
 
 * Se puede sacar el mapa de calor de un jugador de cada torneo, si es que lo tiene:
 ```bash
@@ -268,22 +280,6 @@ get_player_played_data(player_name="Emiliano Martinez", player_id="111873")
 
 Hay visualizaciones seteadas para hacer desde una función que scrapean usando las funciones de la libreria y visualizan la información de cierta manera para que se puede customizar o usar derecho.
 
-* Plotear percentiles de los jugadores de Fbref en un grafico de MPLSoccer
-
-```bash
-ls.visualizations.fbref_plot_player_percentiles(path="https://fbref.com/en/players/058c938c/Marcelino-Moreno", image=None, chart_stats = ["shots", "passes", "defense"], save_image=True, name_extra = "- Lanus", credit_extra= "")
-```
-
-**path** Link del jugador en Fbref  
-**image** path de una imagen que quieras usar, se recomienda pasarla por https://crop-circle.imageonline.co/  
-**chart_stats** agregar rectangulos y nombres de las estadísticas al gráfico  
-**save_image** si guarda el png de la visualización  
-**name_extra** agregarle un string al título  
-**credit_extra** agregarle un string a los créditos  
-
-Ejemplo: ![Marcelino Moreno fbref percentile plot](https://github.com/federicorabanos/LanusStats/assets/101477588/d2c41dd6-8271-498f-8849-73ee093529b4)
-
-
 * Plotear match momentum de FotMob
 
 ```bash
@@ -311,6 +307,12 @@ Hay que poner la url del partido entera. Va a devolver info si es que tiene un m
 ```bash
 ls.visualizations.transfermarkt_player_market_value(player_id='111873')
 ```
+
+* Plotear una cancha con los eventos de un jugador en un partido de SofaScore:
+```bash
+ls.visualizations.sofascore_plot_match_events('https://www.sofascore.com/es/football/match/banfield-racing-club/pobsuob#id:15270114', 'Santiago Sosa', events=None, dashboard=True)
+```
+Se pone la url del partido entera, el nombre tal cual del jugador en sofascore y si queres todas las figuras en una sola, pones dashboard=True
 
 ---
 
