@@ -119,7 +119,7 @@ class SofaScore:
         
         soup = BeautifulSoup(html, 'html.parser')
         data = json.loads(soup.text)
-        time.sleep(get_random_rate_sleep(2, 6))
+        time.sleep(get_random_rate_sleep(1.5, 4))
         return data
 
     def get_match_data(self, match_url):
@@ -413,6 +413,60 @@ class SofaScore:
         
         return heatmap
     
+    def get_player_match_events(self, match_url, player, events=None):
+        """ Get the x-y coordinates for a player events.
+
+        Args:
+            match_url (str): Full link to a SofaScore match
+            player (str): Name of the player (must be the SofaScore one). Use
+                Sofascore.get_player_ids()
+            events (list|str, optional): 
+                - None: Trae 'passes', 'ball-carries', 'dribbles', 'defensive'.
+                - 'all': Trae todas las categorías disponibles en el JSON.
+                - list: Una lista específica (ej. ['passes', 'dribbles']).
+
+        Returns:
+            DataFrame: Pandas dataframe with x-y coordinates for the player
+        """
+        match_id = self.get_match_id(match_url)
+
+        player_ids = self.get_player_ids(match_url)
+        player_id = player_ids[player]
+
+        request_url = f'api/v1/event/{match_id}/player/{player_id}/rating-breakdown'
+        
+        data = self.sofascore_request(request_url)
+
+        if 'error' in data:
+            raise MatchDoesntHaveInfo(match_url)
+
+        if events is None:
+            categories = [k for k in ['passes', 'ball-carries', 'dribbles', 'defensive'] if k in data]
+        elif events == 'all':
+            categories = [k for k, v in data.items() if isinstance(v, list)]
+        else:
+            categories = [k for k in events if k in data]
+
+        if not categories:
+            return pd.DataFrame()
+
+        df_player_events = pd.concat(
+            [pd.json_normalize(data[k]).assign(category=k) for k in categories], 
+            ignore_index=True
+        )
+
+        df_player_events.rename(columns={
+            'playerCoordinates.x': 'x',
+            'playerCoordinates.y': 'y',
+            'passEndCoordinates.x': 'end_x',
+            'passEndCoordinates.y': 'end_y'
+        }, inplace=True)
+
+        cols = ['category'] + [c for c in df_player_events.columns if c != 'category']
+        df_player_events = df_player_events[cols]
+
+        return df_player_events
+
     def get_player_season_heatmap(self, league, season, player_id):
         """Get a player season heatmap as shown in the player page in SofaScore UI
 
