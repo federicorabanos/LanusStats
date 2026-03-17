@@ -104,7 +104,7 @@ class Fbref:
         if df.empty:
             return df
 
-        df = df.applymap(self._fix_encoding)
+        df = df.map(self._fix_encoding)
 
         if change_columns_names:
             df.columns = [
@@ -424,7 +424,7 @@ class Fbref:
         if league != 'Big 5 European Leagues':
             df_data.insert(4, 'Comp', [league]*len(df_data))
         df_data = df_data.dropna().reset_index(drop=True)
-        df_data = df_data.applymap(self._fix_encoding)
+        df_data = df_data.map(self._fix_encoding)
 
         if add_page_name:
             new_columns = [f'{stat}_' + col if col != 'Player' else col for col in df_data.columns]
