@@ -12,8 +12,11 @@ build/
 # Local test scripts
 LanusStats/test_*.py
 
-# IDE / tools
+# Claude Code (local context, not for versioning)
+CLAUDE.md
 .claude/
+
+# IDE / tools
 .vscode/
 .idea/
 
