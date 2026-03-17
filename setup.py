@@ -16,7 +16,7 @@ LONG_DESCRIPTION = (HERE / "README.md").read_text(encoding='utf-8')
 LONG_DESC_TYPE = "text/markdown"
 
 INSTALL_REQUIRES = [
-      'pandas', 'mplsoccer', 'requests', 'matplotlib', 'numpy', 'bs4', 'Pillow', 'faker', 'undetected_chromedriver', 'pydoll-python', 'setuptools'
+      'pandas', 'mplsoccer', 'requests', 'matplotlib', 'numpy', 'bs4', 'Pillow', 'faker', 'nodriver', 'pydoll-python', 'setuptools'
       ]
 
 setup(
