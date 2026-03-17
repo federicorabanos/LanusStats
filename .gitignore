@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+dist/
+build/
+
+# Jupyter
+*.ipynb
+
+# Local test scripts
+LanusStats/test_*.py
+
+# IDE / tools
+.claude/
+.vscode/
+.idea/
+
+# Misc
+*.html
+message.txt
+TestPyPI-Recovery-Codes*.txt
