@@ -24,7 +24,7 @@ class SofaScore:
             'aerialDuelsWon',
             'aerialDuelsWonPercentage',
             'successfulDribbles',
-            'successfulDribblesPercentage'
+            'successfulDribblesPercentage',
             'tackles',
             'assists',
             'accuratePassesPercentage',
@@ -68,7 +68,7 @@ class SofaScore:
             'expectedGoals',
             'errorLeadToGoal',
             'errorLeadToShot',
-            'passToAssist'
+            'passToAssist',
             ]
         self.base_url = 'https://www.sofascore.com/'
 

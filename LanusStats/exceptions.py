@@ -26,4 +26,24 @@ class InvalidStrType(Exception):
     def __init__(self, param):
         self.message = f"{param} must be a string.\n{param} debe ser un string"
         super().__init__(self.message)
+
+class FotMobConnectionError(Exception):
+    """Raised when FotMob blocks the connection (Cloudflare challenge not resolved)."""
+    def __init__(self, status, content_preview):
+        super().__init__(
+            f"FotMob bloqueó la conexión (status: {status}). "
+            f"Primeros 200 chars de la respuesta: {content_preview}"
+        )
+
+class FotMobParseError(Exception):
+    """Raised when the FotMob response is not valid JSON."""
+    def __init__(self, raw):
+        super().__init__(
+            f"La respuesta de FotMob no es JSON válido. Contenido crudo: {raw}"
+        )
+
+class FotMobTimeoutError(Exception):
+    """Raised when a single FotMob request exceeds the configured timeout."""
+    def __init__(self, url):
+        super().__init__(f"Timeout al hacer request a: {url}")
         

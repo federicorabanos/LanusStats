@@ -1,20 +1,35 @@
-import requests
-import pandas as pd
-import time
+import asyncio
+import re
 import json
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
-from .functions import get_possible_leagues_for_page, Options, By, get_random_rate_sleep
-from .exceptions import InvalidStat, MatchDoesntHaveInfo
-from .config import headers
+import sys
+import time
+import threading
+import pandas as pd
+import nodriver as uc
+from .functions import get_possible_leagues_for_page, get_random_rate_sleep
+from .exceptions import (
+    InvalidStat, MatchDoesntHaveInfo,
+    FotMobConnectionError, FotMobParseError, FotMobTimeoutError,
+)
+
+
+class _FotMobResponse:
+    """
+    Thin wrapper around a parsed dict that exposes a .json() method.
+    Keeps all internal callers backward-compatible without changes.
+    """
+    def __init__(self, data: dict):
+        self._data = data
+
+    def json(self):
+        return self._data
+
 
 class FotMob:
-    
-    def __init__(self):
-        self.player_possible_stats = ['goals',
+
+    def __init__(self, request_delay: float = 1.0):
+        self.player_possible_stats = [
+            'goals',
             'goal_assist',
             '_goals_and_goal_assist',
             'rating',
@@ -47,10 +62,11 @@ class FotMob:
             'goals_conceded',
             'fouls',
             'yellow_card',
-            'red_card'
+            'red_card',
         ]
 
-        self.team_possible_stats = ['rating_team',
+        self.team_possible_stats = [
+            'rating_team',
             'goals_team_match',
             'goals_conceded_team_match',
             'possession_percentage_team',
@@ -74,88 +90,205 @@ class FotMob:
             'saves_team',
             'fk_foul_lost_team',
             'total_yel_card_team',
-            'total_red_card_team'
+            'total_red_card_team',
         ]
 
-        self._fotmob_token_cache = {}
-        self.CACHE_SECONDS = 3 * 60 * 60
+        self._browser = None
+        self._warmed_up = False
+        self.request_delay = request_delay
+        self._FETCH_TIMEOUT = 30   # seconds per request
+        self._WARMUP_WAIT = 5      # seconds to resolve Turnstile on homepage
+        self._MAX_RETRIES = 3
 
-    def get_x_mas(self):
+        # Dedicated background event loop — makes FotMob work from scripts AND
+        # Jupyter notebooks (which already have a running event loop that would
+        # reject run_until_complete). All browser/async operations run on this
+        # thread; _submit() dispatches coroutines to it safely from any context.
+        #
+        # On Windows, SelectorEventLoop (the default from new_event_loop()) does
+        # not support subprocesses — nodriver needs to launch Chrome as a subprocess,
+        # so we must use ProactorEventLoop on Windows.
+        if sys.platform == 'win32':
+            self._loop = asyncio.ProactorEventLoop()
+        else:
+            self._loop = asyncio.new_event_loop()
+        self._loop_thread = threading.Thread(
+            target=self._loop.run_forever,
+            daemon=True,
+            name="FotMob-event-loop",
+        )
+        self._loop_thread.start()
+
+    # ─── Browser lifecycle ────────────────────────────────────────────────────
+
+    async def _start_browser(self):
         """
-        Devuelve el token x-mas cacheado si existe y no expiró,
-        sino abre Selenium, lo captura y lo guarda en cache por 3 horas.
+        Inicia nodriver y hace el warm-up en la homepage de FotMob para que
+        Cloudflare Turnstile resuelva automáticamente antes de cualquier request.
         """
-        now = time.time()
-        url = 'https://www.fotmob.com/es/matches/atletico-tucuman-vs-central-cordoba-de-santiago/wcumqqe#4393518'
-        if url in self._fotmob_token_cache and now < self._fotmob_token_cache[url]["expires_at"]:
-            return self._fotmob_token_cache[url]["x_mas"]
+        print("[FotMob] Iniciando browser (nodriver)...")
+        self._browser = await uc.start()
+        await self._browser.get("https://www.fotmob.com")
+        await asyncio.sleep(self._WARMUP_WAIT)
+        self._warmed_up = True
+        print("[FotMob] Browser listo.")
 
-        options = Options()
-        options.add_argument("--headless=new")
-        options.add_argument("--disable-gpu")
-        options.add_argument("--no-sandbox")
-        options.set_capability("goog:loggingPrefs", {"performance": "ALL"})
+    async def _ensure_browser(self):
+        """Garantiza que el browser esté corriendo y el warm-up esté hecho."""
+        if self._browser is None or not self._warmed_up:
+            await self._start_browser()
 
-        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-        driver.get(url)
+    def _submit(self, coro):
+        """
+        Envía una corrutina al background loop y bloquea hasta obtener el resultado.
+        Funciona desde cualquier contexto: script, Jupyter, función async, etc.
+        """
+        future = asyncio.run_coroutine_threadsafe(coro, self._loop)
+        return future.result(timeout=self._FETCH_TIMEOUT + 15)
 
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
+    def close(self):
+        """
+        Cierra el browser de nodriver y libera recursos.
 
-        x_mas = None
-
-        for entry in driver.get_log("performance"):
+        Uso:
+            fotmob = FotMob()
+            # ... uso normal ...
+            fotmob.close()
+        """
+        if self._browser is not None:
             try:
-                message = json.loads(entry["message"])["message"]
-                if message.get("method") != "Network.requestWillBeSent":
-                    continue
-                request = message.get("params", {}).get("request", {})
-                url_request = request.get("url", "")
-                headers = request.get("headers", {})
+                self._browser.stop()
+            except Exception:
+                pass
+            self._browser = None
+            self._warmed_up = False
+        if self._loop is not None and self._loop.is_running():
+            self._loop.call_soon_threadsafe(self._loop.stop)
 
-                if "/api/data/matchDetails" in url_request and "x-mas" in headers:
-                    x_mas = headers["x-mas"]
-                    break
-            except (KeyError, TypeError, json.JSONDecodeError):
-                continue
+    # ─── Core fetch ───────────────────────────────────────────────────────────
 
-        driver.quit()
+    async def _async_fetch(self, url: str) -> dict:
+        """
+        Navega a `url` con nodriver y extrae el JSON de la respuesta.
 
-        if not x_mas:
-            raise ValueError("No se pudo obtener el token")
-
-        # Guardar en cache por 3 horas
-        self._fotmob_token_cache[url] = {"x_mas": x_mas, "expires_at": now + self.CACHE_SECONDS}
-        return x_mas
-
-    def fotmob_request(self, path):
-        """Make request to FotMob.
+        - Extrae el contenido del <pre> que devuelve el browser en endpoints JSON.
+        - Si no hay <pre>, asume Cloudflare challenge y reintenta con espera incremental.
+        - Si el browser se cae, lo detecta y reinicia antes de reintentar.
+        - Timeout por request: self._FETCH_TIMEOUT segundos.
 
         Args:
-            path (str): URL to make the request.
+            url (str): URL completa a fetchear.
 
         Returns:
-            response: Response of the request.
+            dict: JSON parseado de la respuesta.
+
+        Raises:
+            FotMobConnectionError: Si Cloudflare sigue bloqueando tras los reintentos.
+            FotMobParseError: Si la respuesta no es JSON válido.
+            FotMobTimeoutError: Si se supera el timeout.
+        """
+        await self._ensure_browser()
+
+        for attempt in range(1, self._MAX_RETRIES + 1):
+            try:
+                page = await asyncio.wait_for(
+                    self._browser.get(url),
+                    timeout=self._FETCH_TIMEOUT,
+                )
+                await asyncio.sleep(2)  # espera mínima para que cargue el contenido
+                content = await page.get_content()
+
+                match = re.search(r'<pre[^>]*>(.*?)</pre>', content, re.DOTALL)
+                if not match:
+                    # Sin <pre> → probable Cloudflare challenge
+                    if attempt < self._MAX_RETRIES:
+                        wait_s = self._WARMUP_WAIT * attempt
+                        print(
+                            f"[FotMob] Challenge detectado, esperando {wait_s}s "
+                            f"(intento {attempt}/{self._MAX_RETRIES})..."
+                        )
+                        await asyncio.sleep(wait_s)
+                        continue
+                    raise FotMobConnectionError("unknown", content[:200])
+
+                raw = match.group(1).strip()
+                try:
+                    return json.loads(raw)
+                except json.JSONDecodeError:
+                    raise FotMobParseError(raw[:500])
+
+            except asyncio.TimeoutError:
+                if attempt < self._MAX_RETRIES:
+                    print(f"[FotMob] Timeout, reiniciando browser (intento {attempt}/{self._MAX_RETRIES})...")
+                    await self._restart_browser()
+                    continue
+                raise FotMobTimeoutError(url)
+
+            except (FotMobConnectionError, FotMobParseError, FotMobTimeoutError):
+                raise
+
+            except Exception as e:
+                if attempt < self._MAX_RETRIES:
+                    print(f"[FotMob] Error de browser ({type(e).__name__}: {e}), reiniciando (intento {attempt}/{self._MAX_RETRIES})...")
+                    await self._restart_browser()
+                    continue
+                raise
+
+    def _reset_browser(self):
+        """Marca el browser como inválido para forzar un reinicio en el próximo fetch."""
+        try:
+            self._browser.stop()
+        except Exception:
+            pass
+        self._browser = None
+        self._warmed_up = False
+
+    async def _restart_browser(self):
+        """Resetea el estado del browser y lo reinicia con warm-up."""
+        self._reset_browser()
+        await self._start_browser()
+
+    def _fetch(self, url: str) -> dict:
+        """
+        Wrapper sincrónico sobre _async_fetch. Despacha la corrutina al
+        background loop dedicado, bloqueando hasta obtener el resultado.
+        Funciona desde scripts .py, Jupyter notebooks, y funciones async.
+
+        Args:
+            url (str): URL completa a fetchear.
+
+        Returns:
+            dict: JSON parseado de la respuesta.
+        """
+        return self._submit(self._async_fetch(url))
+
+    def fotmob_request(self, path: str) -> _FotMobResponse:
+        """
+        Hace una request a la API de FotMob usando nodriver con bypass de Cloudflare.
+
+        Args:
+            path (str): Path de la API (sin la base URL). Ej: 'matchDetails?matchId=123'
+
+        Returns:
+            _FotMobResponse: Objeto con método .json() que retorna el dict de la respuesta.
         """
         url = f'https://www.fotmob.com/api/{path}'
-        token = self.get_x_mas()
-        dict_token = {
-            "X-Mas": token
-        }
-        headers_with_token = headers | dict_token
-        response = requests.get(url, headers=headers_with_token)
-        time.sleep(get_random_rate_sleep(1, 3))
-        return response
+        data = self._fetch(url)
+        time.sleep(self.request_delay)
+        return _FotMobResponse(data)
 
-    def get_season_tables(self, league, season, table = ['all', 'home', 'away', 'form', 'xg']):
+    # ─── Public methods (interfaz sin cambios) ────────────────────────────────
+
+    def get_season_tables(self, league, season, table=['all', 'home', 'away', 'form', 'xg']):
         """Get standing tables from a list of possible ones from a certain season in a league.
 
         Args:
             league (str): Possible leagues in get_available_leagues("Fotmob")
-            season (str): Possible saeson in get_available_season_for_leagues("Fotmob", league)
+            season (str): Possible season in get_available_season_for_leagues("Fotmob", league)
             table (list, optional): Type of table shown in FotMob UI. Defaults to ['all', 'home', 'away', 'form', 'xg'].
 
         Returns:
-            table_df: DataFrame with the table/s. 
+            table_df: DataFrame with the table/s.
         """
         leagues = get_possible_leagues_for_page(league, season, 'Fotmob')
         league_id = leagues[league]['id']
@@ -169,28 +302,33 @@ class FotMob:
         except KeyError:
             tables = response.json()['table'][0]['data']['tables']
             table_df = tables
-            print('This response has a list of two values, because the tables are split. If you save the list in a variable and then do variable[0]["table"] you will have all of the tables\nThen just select one ["all", "home", "away", "form", "xg"] that exists and put it inside a pd.DataFrame()\nSomething like pd.DataFrame(variable[0]["table"]["all"])')
+            print(
+                'This response has a list of two values, because the tables are split. '
+                'If you save the list in a variable and then do variable[0]["table"] you will have all of the tables\n'
+                'Then just select one ["all", "home", "away", "form", "xg"] that exists and put it inside a pd.DataFrame()\n'
+                'Something like pd.DataFrame(variable[0]["table"]["all"])'
+            )
         return table_df
-    
+
     def request_match_details(self, match_id):
-        """Get match deatils with a request.
+        """Get match details with a request.
 
         Args:
-            match_id (str): id of a certain match, could be found in the URL
+            match_id (str): Id of a certain match, could be found in the URL.
 
         Returns:
-            response: json with the response.
+            _FotMobResponse: Object with .json() returning the full match details dict.
         """
         path = f'matchDetails?matchId={match_id}'
         response = self.fotmob_request(path)
         return response
-    
+
     def get_players_stats_season(self, league, season, stat):
-        """Get players for a certain season and league stats. Possible stats are player_possible_stats.
+        """Get players stats for a certain season and league. Possible stats are player_possible_stats.
 
         Args:
             league (str): Possible leagues in get_available_leagues("Fotmob")
-            season (str): Possible saeson in get_available_season_for_leagues("Fotmob", league)
+            season (str): Possible season in get_available_season_for_leagues("Fotmob", league)
             stat (str): Value inside player_possible_stats
 
         Raises:
@@ -207,17 +345,17 @@ class FotMob:
         season_id = leagues[league]['seasons'][season]
         path = f'leagueseasondeepstats?id={league_id}&season={season_id}&type=players&stat={stat}'
         response = self.fotmob_request(path)
-        df_1 = pd.DataFrame(response.json()['statsData'])
-        df_2 = pd.DataFrame(response.json()['statsData']).statValue.apply(pd.Series)
-        df = pd.concat([df_1, df_2], axis=1)
+        stats_data = response.json()['statsData']
+        df = pd.DataFrame(stats_data)
+        df = pd.concat([df, df.statValue.apply(pd.Series)], axis=1)
         return df
-    
+
     def get_teams_stats_season(self, league, season, stat):
-        """Get teams for a certain season and league stats. Possible stats are team_possible_stats.
+        """Get teams stats for a certain season and league. Possible stats are team_possible_stats.
 
         Args:
             league (str): Possible leagues in get_available_leagues("Fotmob")
-            season (str): Possible saeson in get_available_season_for_leagues("Fotmob", league)
+            season (str): Possible season in get_available_season_for_leagues("Fotmob", league)
             stat (str): Value inside team_possible_stats
 
         Raises:
@@ -234,9 +372,9 @@ class FotMob:
         season_id = leagues[league]['seasons'][season]
         path = f'leagueseasondeepstats?id={league_id}&season={season_id}&type=teams&stat={stat}'
         response = self.fotmob_request(path)
-        df_1 = pd.DataFrame(response.json()['statsData'])
-        df_2 = pd.DataFrame(response.json()['statsData']).statValue.apply(pd.Series)
-        df = pd.concat([df_1, df_2], axis=1)
+        stats_data = response.json()['statsData']
+        df = pd.DataFrame(stats_data)
+        df = pd.concat([df, df.statValue.apply(pd.Series)], axis=1)
         return df
 
     def get_match_shotmap(self, match_id):
@@ -254,14 +392,13 @@ class FotMob:
             shotmap: DataFrame with the data for all the shots shown in the FotMob UI.
         """
         response = self.request_match_details(match_id)
-        time.sleep(1)
         df_shotmap = pd.DataFrame(response.json()['content']['shotmap']['shots'])
         if df_shotmap.empty:
             raise MatchDoesntHaveInfo(match_id)
-        ongoalshot = df_shotmap.onGoalShot.apply(pd.Series).rename(columns={'x': 'goalMouthY', 'y': 'goalMouthZ'}) 
+        ongoalshot = df_shotmap.onGoalShot.apply(pd.Series).rename(columns={'x': 'goalMouthY', 'y': 'goalMouthZ'})
         shotmap = pd.concat([df_shotmap, ongoalshot], axis=1).drop(columns=['onGoalShot'])
         return shotmap
-    
+
     def get_team_colors(self, match_id):
         """Get team colors as FotMob UI uses.
 
@@ -274,18 +411,17 @@ class FotMob:
             home_color, away_color: strings with hex codes.
         """
         response = self.request_match_details(match_id)
-        time.sleep(1)
         colors = response.json()['general']['teamColors']
         home_color = colors['darkMode']['home']
         away_color = colors['darkMode']['away']
-        
+
         if home_color == '#ffffff':
             home_color = colors['lightMode']['home']
         if away_color == '#ffffff':
             away_color = colors['lightMode']['away']
-        return home_color, away_color    
-    
-    def get_general_match_stats(self,match_id):
+        return home_color, away_color
+
+    def get_general_match_stats(self, match_id):
         """Get general match stats for a certain match (shots, passes, duels won for the teams).
 
         Args:
@@ -294,47 +430,42 @@ class FotMob:
                             4393680 is the match_id.
 
         Returns:
-            total_df: DataFrame with the stats of the teams for a certain match
+            total_df: DataFrame with the stats of the teams for a certain match.
         """
         response = self.request_match_details(match_id)
-        time.sleep(1)
         total_df = pd.DataFrame()
         stats_df = response.json()['content']['stats']['Periods']['All']['stats']
-        for i in range(len(stats_df)):
-            df = pd.DataFrame(stats_df[i]['stats'])
-            total_df = pd.concat([df, total_df])
-        total_df = pd.concat([total_df, total_df.stats
-                              .apply(pd.Series)
-                              .rename(columns={0: 'home', 1: 'away'})], axis=1) \
-                .drop(columns=['stats']) \
-                .dropna(subset=['home', 'away'])
+        for item in stats_df:
+            total_df = pd.concat([pd.DataFrame(item['stats']), total_df])
+        total_df = pd.concat(
+            [total_df, total_df.stats.apply(pd.Series).rename(columns={0: 'home', 1: 'away'})],
+            axis=1,
+        ).drop(columns=['stats']).dropna(subset=['home', 'away'])
         return total_df
-    
+
     def get_player_season_stats(self, season_index, competition_index, player_id):
         """Scrape a player stats from a certain league and season, if they have one.
 
         Args:
-            season_index (str): Position of the season in the dropdown on FotMob UI
-            competition_index (str): Position of the competition in a season in the dropdown on FotMob UI
+            season_index (str): Position of the season in the dropdown on FotMob UI.
+            competition_index (str): Position of the competition in a season in the dropdown on FotMob UI.
             player_id (str): FotMob Id of a player. Could be found in the URL of a specific player.
                              Example: https://www.fotmob.com/es/players/727095/ignacio-ramirez
                              727095 is the player_id.
 
         Returns:
-            response: json with the data for all the stats shown in the FotMob UI.
-
+            dict: JSON with the data for all the stats shown in the FotMob UI.
         """
         path = f'playerStats?playerId={player_id}&seasonId={season_index}-{competition_index}&isFirstSeason=false'
         response = self.fotmob_request(path)
         return response.json()
 
-
     def get_player_shotmap(self, season_index, competition_index, player_id):
         """Scrape a player shotmap from a certain league and season, if they have one.
 
         Args:
-            season_index (str): Position of the season in the dropdown on FotMob UI
-            competition_index (str): Position of the competition in a season in the dropdown on FotMob UI
+            season_index (str): Position of the season in the dropdown on FotMob UI.
+            competition_index (str): Position of the competition in a season in the dropdown on FotMob UI.
             player_id (str): FotMob Id of a player. Could be found in the URL of a specific player.
                              Example: https://www.fotmob.com/es/players/727095/ignacio-ramirez
                              727095 is the player_id.
@@ -342,7 +473,7 @@ class FotMob:
         Returns:
             shotmap: DataFrame with the data for all the shots shown in the FotMob UI.
         """
-        response = self.get_player_seasons_stats(season_index, competition_index, player_id)
+        response = self.get_player_season_stats(season_index, competition_index, player_id)
         try:
             shotmap = pd.DataFrame(response['shotmap'])
         except TypeError:
@@ -350,12 +481,11 @@ class FotMob:
         return shotmap
 
     def get_player_percentiles(self, season_index, competition_index, player_id):
-        """
-        Scrape a player percentiles from a certain league and season, if they have one.
+        """Scrape a player percentiles from a certain league and season, if they have one.
 
         Args:
-            season_index (str): Position of the season in the dropdown on FotMob UI
-            competition_index (str): Position of the competition in a season in the dropdown on FotMob UI
+            season_index (str): Position of the season in the dropdown on FotMob UI.
+            competition_index (str): Position of the competition in a season in the dropdown on FotMob UI.
             player_id (str): FotMob Id of a player. Could be found in the URL of a specific player.
                              Example: https://www.fotmob.com/es/players/727095/ignacio-ramirez
                              727095 is the player_id.
@@ -363,7 +493,6 @@ class FotMob:
         Returns:
             df_percentiles: DataFrame with the data for all the percentiles shown in the FotMob UI.
         """
-
         response = self.get_player_season_stats(season_index, competition_index, player_id)
         try:
             stats = pd.DataFrame(response['statsSection']['items'])
@@ -374,8 +503,7 @@ class FotMob:
         return df_percentiles
 
     def get_player_data(self, player_id):
-        """
-        Scrape a player data.
+        """Scrape a player data.
 
         Args:
             player_id (str): FotMob Id of a player. Could be found in the URL of a specific player.
@@ -383,9 +511,8 @@ class FotMob:
                              727095 is the player_id.
 
         Returns:
-            json_data: json with the data available of a player.
+            dict: JSON with the data available of a player.
         """
         path = f'/data/playerData?id={player_id}'
         response = self.fotmob_request(path)
-        json_data = response.json()
-        return json_data
+        return response.json()
