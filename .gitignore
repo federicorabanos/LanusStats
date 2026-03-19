@@ -20,6 +20,9 @@ CLAUDE.md
 .vscode/
 .idea/
 
+# MkDocs build output
+site/
+
 # Misc
 *.html
 message.txt

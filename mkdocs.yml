@@ -1,0 +1,70 @@
+site_name: LanusStats
+site_description: Librería de Python para scrapear datos de fútbol y visualizarlos
+site_author: Federico Rábanos
+site_url: https://federicorabanos.github.io/LanusStats/
+repo_url: https://github.com/federicorabanos/LanusStats
+repo_name: federicorabanos/LanusStats
+
+theme:
+  name: material
+  language: es
+  palette:
+    - scheme: default
+      primary: green
+      accent: light green
+      toggle:
+        icon: material/brightness-7
+        name: Cambiar a modo oscuro
+    - scheme: slate
+      primary: green
+      accent: light green
+      toggle:
+        icon: material/brightness-4
+        name: Cambiar a modo claro
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search:
+      lang: es
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+  - pymdownx.details
+  - attr_list
+  - md_in_html
+  - tables
+
+nav:
+  - Inicio: index.md
+  - Funciones Generales: general.md
+  - Módulos:
+    - FBRef: fbref.md
+    - FotMob: fotmob.md
+    - SofaScore: sofascore.md
+    - Transfermarkt: transfermarkt.md
+    - 365Scores: threesixfivescores.md
+    - DataFactory: datafactory.md
+  - Visualizaciones: visualizations.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/federicorabanos/LanusStats
+    - icon: fontawesome/brands/discord
+      link: https://discord.gg/3Nk7Pe6mb8
