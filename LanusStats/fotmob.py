@@ -272,7 +272,7 @@ class FotMob:
         Returns:
             _FotMobResponse: Objeto con método .json() que retorna el dict de la respuesta.
         """
-        url = f'https://www.fotmob.com/api/{path}'
+        url = f'https://www.fotmob.com/api/data/{path}'
         data = self._fetch(url)
         time.sleep(self.request_delay)
         return _FotMobResponse(data)
