@@ -4,7 +4,7 @@ from setuptools import find_packages, setup
 HERE = pathlib.Path(__file__).parent
 
 
-VERSION = '2.1.0'
+VERSION = '2.1.1'
 PACKAGE_NAME = 'lanusstats'
 AUTHOR = 'Federico Rábanos'
 AUTHOR_EMAIL = 'lanusstats@gmail.com'
