@@ -22,7 +22,14 @@ def _get_chrome_major_version():
     elif sys.platform == "darwin":
         cmds = [['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', '--version']]
     else:
-        cmds = [['google-chrome', '--version'], ['chromium-browser', '--version'], ['chromium', '--version']]
+        cmds = [
+            ['google-chrome', '--version'],
+            ['google-chrome-stable', '--version'],
+            ['/usr/bin/google-chrome', '--version'],
+            ['/usr/bin/google-chrome-stable', '--version'],
+            ['chromium-browser', '--version'],
+            ['chromium', '--version'],
+        ]
 
     for cmd in cmds:
         try:
