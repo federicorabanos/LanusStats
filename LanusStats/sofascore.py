@@ -1,4 +1,7 @@
 import json
+import re
+import subprocess
+import sys
 from datetime import datetime
 import time
 from .functions import get_possible_leagues_for_page, pd, uc, get_random_rate_sleep
@@ -6,6 +9,30 @@ from .exceptions import InvalidStrType, MatchDoesntHaveInfo, PlayerDoesntHaveInf
 from faker import Faker
 from faker.providers import user_agent
 from bs4 import BeautifulSoup
+
+
+def _get_chrome_major_version():
+    """Detect the installed Chrome major version to avoid chromedriver mismatch."""
+    cmds = []
+    if sys.platform == "win32":
+        cmds = [
+            ['reg', 'query', r'HKEY_CURRENT_USER\Software\Google\Chrome\BLBeacon', '/v', 'version'],
+            ['reg', 'query', r'HKEY_LOCAL_MACHINE\SOFTWARE\Google\Chrome\BLBeacon', '/v', 'version'],
+        ]
+    elif sys.platform == "darwin":
+        cmds = [['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', '--version']]
+    else:
+        cmds = [['google-chrome', '--version'], ['chromium-browser', '--version'], ['chromium', '--version']]
+
+    for cmd in cmds:
+        try:
+            out = subprocess.run(cmd, capture_output=True, text=True, timeout=5).stdout
+            match = re.search(r'(\d+)\.\d+\.\d+', out)
+            if match:
+                return int(match.group(1))
+        except Exception:
+            continue
+    return None
 
 fake = Faker()
 fake.add_provider(user_agent)
@@ -106,7 +133,8 @@ class SofaScore:
         user_agent = fake.chrome()
 
         chrome_options.add_argument(f'user-agent={user_agent}')
-        driver = uc.Chrome(options=chrome_options)
+        chrome_version = _get_chrome_major_version()
+        driver = uc.Chrome(options=chrome_options, version_main=chrome_version)
 
         try:
             driver.get(path)
