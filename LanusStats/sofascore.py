@@ -41,6 +41,22 @@ def _get_chrome_major_version():
             continue
     return None
 
+def _get_system_chromedriver_path():
+    """Return the path to a system-installed chromedriver, or None to let uc download its own."""
+    candidates = [
+        '/usr/local/bin/chromedriver',
+        '/usr/bin/chromedriver',
+    ]
+    for path in candidates:
+        try:
+            out = subprocess.run([path, '--version'], capture_output=True, text=True, timeout=5).stdout
+            if 'ChromeDriver' in out:
+                return path
+        except Exception:
+            continue
+    return None
+
+
 fake = Faker()
 fake.add_provider(user_agent)
 
@@ -141,7 +157,12 @@ class SofaScore:
 
         chrome_options.add_argument(f'user-agent={user_agent}')
         chrome_version = _get_chrome_major_version()
-        driver = uc.Chrome(options=chrome_options, version_main=chrome_version)
+        system_chromedriver = _get_system_chromedriver_path()
+        driver = uc.Chrome(
+            options=chrome_options,
+            version_main=chrome_version,
+            driver_executable_path=system_chromedriver,
+        )
 
         try:
             driver.get(path)
