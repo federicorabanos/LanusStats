@@ -1,4 +1,4 @@
-from exceptions import *
+from .exceptions import *
 import numpy as np
 import random
 from selenium.webdriver.chrome.options import Options

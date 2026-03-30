@@ -4,8 +4,8 @@ import subprocess
 import sys
 from datetime import datetime
 import time
-from functions import get_possible_leagues_for_page, pd, uc, get_random_rate_sleep
-from exceptions import InvalidStrType, MatchDoesntHaveInfo, PlayerDoesntHaveInfo
+from .functions import get_possible_leagues_for_page, pd, uc, get_random_rate_sleep
+from .exceptions import InvalidStrType, MatchDoesntHaveInfo, PlayerDoesntHaveInfo
 from faker import Faker
 from faker.providers import user_agent
 from bs4 import BeautifulSoup
