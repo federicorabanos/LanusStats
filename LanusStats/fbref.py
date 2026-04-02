@@ -333,7 +333,7 @@ class Fbref:
                 else:
                     html = result
 
-                html = html.encode("utf-8", "ignore").decode("unicode_escape")
+                html = html.encode("utf-8", "replace").decode("utf-8", "replace")
 
                 return html
 
