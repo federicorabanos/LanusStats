@@ -2,6 +2,7 @@ import json
 import re
 import subprocess
 import sys
+import numpy as np
 from datetime import datetime
 import time
 from .functions import get_possible_leagues_for_page, pd, uc, get_random_rate_sleep
@@ -119,6 +120,7 @@ class SofaScore:
             'errorLeadToGoal',
             'errorLeadToShot',
             'passToAssist',
+            'rating'
             ]
         self.base_url = 'https://www.sofascore.com/'
 
@@ -135,6 +137,27 @@ class SofaScore:
         match_id = match_url.split(':')[-1]
         return match_id
         
+    def _build_driver(self):
+        chrome_options = uc.ChromeOptions()
+        chrome_options.add_argument("--headless=new")
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument(f'user-agent={Faker().chrome()}')
+        return uc.Chrome(
+            options=chrome_options,
+            version_main=_get_chrome_major_version(),
+            driver_executable_path=_get_system_chromedriver_path(),
+        )
+
+    def _fetch_with_driver(self, driver, path):
+        url = f"{self.base_url}{path}"
+        driver.get(url)
+        time.sleep(2)
+        soup = BeautifulSoup(driver.page_source, 'html.parser')
+        data = json.loads(soup.text)
+        time.sleep(get_random_rate_sleep(1, 3.5))
+        return data
+
     def sofascore_request(self, path):
         """Request used to SofaScore
 
@@ -144,39 +167,11 @@ class SofaScore:
         Returns:
             data: _description_
         """
-
-        path = f"{self.base_url}{path}"
-
-        chrome_options = uc.ChromeOptions()
-        chrome_options.add_argument("--headless=new")
-        chrome_options.add_argument("--no-sandbox")
-        chrome_options.add_argument("--disable-dev-shm-usage")
-        fake = Faker()
-
-        user_agent = fake.chrome()
-
-        chrome_options.add_argument(f'user-agent={user_agent}')
-        chrome_version = _get_chrome_major_version()
-        system_chromedriver = _get_system_chromedriver_path()
-        driver = uc.Chrome(
-            options=chrome_options,
-            version_main=chrome_version,
-            driver_executable_path=system_chromedriver,
-        )
-
+        driver = self._build_driver()
         try:
-            driver.get(path)
-            time.sleep(3)
-
-            html = driver.page_source
-
+            return self._fetch_with_driver(driver, path)
         finally:
             driver.quit()
-        
-        soup = BeautifulSoup(html, 'html.parser')
-        data = json.loads(soup.text)
-        time.sleep(get_random_rate_sleep(1.5, 4))
-        return data
 
     def get_match_data(self, match_url):
         """Gets all the general data from a match 
@@ -194,7 +189,7 @@ class SofaScore:
         
         data = self.sofascore_request(url)
         
-        time.sleep(get_random_rate_sleep(2, 3))
+        time.sleep(get_random_rate_sleep(1.5, 2.5))
         
         return data
 
@@ -232,26 +227,34 @@ class SofaScore:
         Returns:
             DataFrame: Dataframe with all the data from the shotmap shown in SofaScore UI
         """
-        
         match_id = self.get_match_id(match_url)
-        
-        url = f'api/v1/event/{match_id}/shotmap'
-        
-        data = self.sofascore_request(url)
+
+        driver = self._build_driver()
         try:
-            shots = data['shotmap']
-        except KeyError:
-            raise MatchDoesntHaveInfo(match_url)
-        
-        match_shots = pd.DataFrame(shots)
-        today = datetime.now().strftime('%Y-%m-%d')
-        if save_csv:
-            match_shots.to_csv(f'shots match - {match_id} - {today}.csv')
-        players = match_shots.player.apply(pd.Series)
-        coordenates = match_shots.playerCoordinates.apply(pd.Series)
-        match_shots = pd.concat([match_shots.drop(columns=['player']), players], axis=1)
-        match_shots = pd.concat([match_shots.drop(columns=['playerCoordinates']), coordenates], axis=1)
-        
+            data = self._fetch_with_driver(driver, f'api/v1/event/{match_id}/shotmap')
+            if 'shotmap' not in data:
+                raise MatchDoesntHaveInfo(match_url)
+
+            match_shots = pd.DataFrame(data['shotmap'])
+            today = datetime.now().strftime('%Y-%m-%d')
+            if save_csv:
+                match_shots.to_csv(f'shots match - {match_id} - {today}.csv')
+            players = match_shots['player'].apply(pd.Series)
+            coordenates = match_shots['playerCoordinates'].apply(pd.Series)
+            match_shots = pd.concat([match_shots.drop(columns=['player']), players], axis=1)
+            match_shots = pd.concat([match_shots.drop(columns=['playerCoordinates']), coordenates], axis=1)
+            match_shots['match_id'] = match_id
+
+            event_data = self._fetch_with_driver(driver, f'api/v1/event/{match_id}')
+            home_name = (event_data.get('event') or {}).get('homeTeam', {}).get('name')
+            away_name = (event_data.get('event') or {}).get('awayTeam', {}).get('name')
+
+            if 'isHome' in match_shots.columns and home_name is not None:
+                match_shots['teamName'] = np.where(match_shots['isHome'], home_name, away_name)
+                match_shots['vs teamName'] = np.where(match_shots['isHome'], away_name, home_name)
+        finally:
+            driver.quit()
+
         return match_shots
     
     def get_positions(self, selected_positions):
