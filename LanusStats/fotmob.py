@@ -4,6 +4,7 @@ import json
 import sys
 import time
 import threading
+import numpy as np
 import pandas as pd
 import nodriver as uc
 from .functions import get_possible_leagues_for_page, get_random_rate_sleep
@@ -392,11 +393,41 @@ class FotMob:
             shotmap: DataFrame with the data for all the shots shown in the FotMob UI.
         """
         response = self.request_match_details(match_id)
-        df_shotmap = pd.DataFrame(response.json()['content']['shotmap']['shots'])
+        data = response.json()
+
+        df_shotmap = pd.DataFrame(data.get('content', {}).get('shotmap', {}).get('shots', []))
         if df_shotmap.empty:
             raise MatchDoesntHaveInfo(match_id)
-        ongoalshot = df_shotmap.onGoalShot.apply(pd.Series).rename(columns={'x': 'goalMouthY', 'y': 'goalMouthZ'})
+        ongoalshot = df_shotmap['onGoalShot'].apply(pd.Series).rename(columns={'x': 'goalMouthY', 'y': 'goalMouthZ'})
         shotmap = pd.concat([df_shotmap, ongoalshot], axis=1).drop(columns=['onGoalShot'])
+
+        general = data.get('general', {}) or {}
+        home = general.get('homeTeam', {}) or {}
+        away = general.get('awayTeam', {}) or {}
+        team1, id_team1 = home.get('name'), home.get('id')
+        team2, id_team2 = away.get('name'), away.get('id')
+
+        if 'teamId' in shotmap.columns and id_team1 is not None:
+            shotmap['teamName'] = np.where(shotmap['teamId'] == id_team1, team1, team2)
+            shotmap['vs teamName'] = np.where(shotmap['teamId'] == id_team1, team2, team1)
+
+        players = (data.get('content', {}) or {}).get('playerStats') or {}
+        if players and 'keeperId' in shotmap.columns:
+            keeper_id_to_name = {
+                int(k): v.get('name')
+                for k, v in players.items()
+                if isinstance(v, dict)
+            }
+            shotmap['keeperName'] = shotmap['keeperId'].apply(
+                lambda x: keeper_id_to_name.get(int(x)) if pd.notna(x) else None
+            )
+
+        shotmap['match_id'] = match_id
+        shotmap['liga'] = general.get('leagueName')
+        shotmap['fecha'] = general.get('leagueRoundName')
+        match_date_raw = general.get('matchTimeUTCDate')
+        shotmap['dia_partido'] = match_date_raw.split('T')[0] if match_date_raw else None
+
         return shotmap
 
     def get_team_colors(self, match_id):
