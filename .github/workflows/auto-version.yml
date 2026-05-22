@@ -7,9 +7,10 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 jobs:
-  bump-version:
+  bump-and-publish:
     runs-on: ubuntu-latest
     if: "!startsWith(github.event.head_commit.message, 'bump: v')"
 
@@ -24,15 +25,13 @@ jobs:
         run: |
           VERSION=$(python -c "import re; content=open('setup.py').read(); print(re.search(r\"VERSION = '(.+?)'\", content).group(1))")
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Versión actual: $VERSION"
 
       - name: Calcular nueva versión (patch bump)
         id: new
         run: |
           VERSION=${{ steps.current.outputs.version }}
           IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
-          NEW_PATCH=$((PATCH + 1))
-          NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
+          NEW_VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "Nueva versión: $NEW_VERSION"
 
@@ -65,3 +64,17 @@ jobs:
           tag_name: v${{ steps.new.outputs.version }}
           name: v${{ steps.new.outputs.version }}
           generate_release_notes: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+
+      - name: Build y publish a PyPI
+        run: |
+          pip install setuptools wheel twine
+          python setup.py sdist bdist_wheel
+          python -m twine upload dist/*
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
