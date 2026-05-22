@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.1.11] - 2026-05-22
+
+### Changed
+- fix: mover publish a PyPI dentro del workflow de auto-version
+
 ## [2.1.10] - 2026-05-22
 
 ### Changed
