@@ -11,7 +11,6 @@ permissions:
 jobs:
   bump-version:
     runs-on: ubuntu-latest
-    # Evita loop si el commit que triggerea es el bump de versión mismo
     if: "!startsWith(github.event.head_commit.message, 'bump: v')"
 
     steps:
@@ -44,12 +43,24 @@ jobs:
           echo "setup.py actualizado a $NEW_VERSION"
 
       - name: Actualizar CHANGELOG.md
+        env:
+          NEW_VERSION: ${{ steps.new.outputs.version }}
         run: |
-          NEW_VERSION=${{ steps.new.outputs.version }}
-          DATE=$(date +%Y-%m-%d)
-          COMMIT_MSG=$(git log -1 --pretty=%B)
-          # Inserta nueva entrada al inicio del changelog (después del título)
-          sed -i "2s/^/\n## [$NEW_VERSION] - $DATE\n\n### Changed\n- $COMMIT_MSG\n/" CHANGELOG.md
+          export DATE=$(date +%Y-%m-%d)
+          export COMMIT_MSG=$(git log -1 --pretty=%s)
+          python - <<PYEOF
+import os
+new_version = os.environ['NEW_VERSION']
+date = os.environ['DATE']
+commit_msg = os.environ['COMMIT_MSG']
+entry = f"\n## [{new_version}] - {date}\n\n### Changed\n- {commit_msg}\n"
+with open('CHANGELOG.md', 'r') as f:
+    content = f.read()
+title, rest = content.split('\n', 1)
+with open('CHANGELOG.md', 'w') as f:
+    f.write(title + entry + rest)
+PYEOF
+        # Las variables de shell también se pasan al subprocess de Python via env heredado
 
       - name: Commit y tag
         run: |
