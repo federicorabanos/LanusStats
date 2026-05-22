@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.1.10] - 2026-05-22
+
+### Changed
+- fix: reemplazar heredoc Python por bash puro en workflow
+
 ## [2.1.9] - 2026-05-22
 
 ### Changed
