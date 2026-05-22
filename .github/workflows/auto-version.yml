@@ -11,7 +11,6 @@ permissions:
 jobs:
   bump-version:
     runs-on: ubuntu-latest
-    # Evita loop si el commit que triggerea es el bump de versión mismo
     if: "!startsWith(github.event.head_commit.message, 'bump: v')"
 
     steps:
@@ -41,15 +40,14 @@ jobs:
         run: |
           NEW_VERSION=${{ steps.new.outputs.version }}
           sed -i "s/VERSION = '.*'/VERSION = '$NEW_VERSION'/" setup.py
-          echo "setup.py actualizado a $NEW_VERSION"
 
       - name: Actualizar CHANGELOG.md
         run: |
           NEW_VERSION=${{ steps.new.outputs.version }}
           DATE=$(date +%Y-%m-%d)
-          COMMIT_MSG=$(git log -1 --pretty=%B)
-          # Inserta nueva entrada al inicio del changelog (después del título)
-          sed -i "2s/^/\n## [$NEW_VERSION] - $DATE\n\n### Changed\n- $COMMIT_MSG\n/" CHANGELOG.md
+          COMMIT_MSG=$(git log -1 --pretty=%s)
+          { head -1 CHANGELOG.md; printf "\n## [%s] - %s\n\n### Changed\n- %s\n" "$NEW_VERSION" "$DATE" "$COMMIT_MSG"; tail -n +2 CHANGELOG.md; } > CHANGELOG.tmp
+          mv CHANGELOG.tmp CHANGELOG.md
 
       - name: Commit y tag
         run: |
