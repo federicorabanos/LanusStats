@@ -1,0 +1,69 @@
+name: Auto version bump on merge to main
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+    # Evita loop si el commit que triggerea es el bump de versión mismo
+    if: "!startsWith(github.event.head_commit.message, 'bump: v')"
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Leer versión actual desde setup.py
+        id: current
+        run: |
+          VERSION=$(python -c "import re; content=open('setup.py').read(); print(re.search(r\"VERSION = '(.+?)'\", content).group(1))")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Versión actual: $VERSION"
+
+      - name: Calcular nueva versión (patch bump)
+        id: new
+        run: |
+          VERSION=${{ steps.current.outputs.version }}
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+          NEW_PATCH=$((PATCH + 1))
+          NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "Nueva versión: $NEW_VERSION"
+
+      - name: Actualizar setup.py
+        run: |
+          NEW_VERSION=${{ steps.new.outputs.version }}
+          sed -i "s/VERSION = '.*'/VERSION = '$NEW_VERSION'/" setup.py
+          echo "setup.py actualizado a $NEW_VERSION"
+
+      - name: Actualizar CHANGELOG.md
+        run: |
+          NEW_VERSION=${{ steps.new.outputs.version }}
+          DATE=$(date +%Y-%m-%d)
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          # Inserta nueva entrada al inicio del changelog (después del título)
+          sed -i "2s/^/\n## [$NEW_VERSION] - $DATE\n\n### Changed\n- $COMMIT_MSG\n/" CHANGELOG.md
+
+      - name: Commit y tag
+        run: |
+          NEW_VERSION=${{ steps.new.outputs.version }}
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add setup.py CHANGELOG.md
+          git commit -m "bump: v$NEW_VERSION"
+          git tag "v$NEW_VERSION"
+          git push origin main --tags
+
+      - name: Crear GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.new.outputs.version }}
+          name: v${{ steps.new.outputs.version }}
+          generate_release_notes: true
