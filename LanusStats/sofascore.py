@@ -101,6 +101,11 @@ class SofaScore:
 
     def _ensure_session(self) -> cffi_requests.Session:
         if self._session is None:
+            # SofaScore's WAF challenges curl_cffi's Chrome/Firefox TLS fingerprints
+            # (403 {"code": 403, "reason": "challenge"}) but not its Safari one.
+            # If this starts getting SofaScoreConnectionError everywhere, SofaScore
+            # may have adjusted their WAF rules — try a different `impersonate`
+            # target (see curl_cffi.requests.impersonate for the full list).
             self._session = cffi_requests.Session(impersonate='safari184')
         return self._session
 
@@ -115,12 +120,27 @@ class SofaScore:
 
         Raises:
             SofaScoreConnectionError: SofaScore blocked the request
-                (403/429 bot-detection challenge).
+                (403/429 bot-detection challenge), whether the block came
+                back as SofaScore's own JSON error body or as a non-JSON
+                page from an upstream WAF/CDN.
         """
         session = self._ensure_session()
         url = f'{self.base_url}{path}'
         response = session.get(url, timeout=20)
-        data = response.json()
+
+        if response.status_code in (403, 429):
+            try:
+                payload = response.json().get('error', response.status_code)
+            except Exception:
+                payload = f'HTTP {response.status_code}: {response.text[:200]!r}'
+            raise SofaScoreConnectionError(payload)
+
+        try:
+            data = response.json()
+        except ValueError:
+            raise SofaScoreConnectionError(
+                f'HTTP {response.status_code}, non-JSON body: {response.text[:200]!r}'
+            )
 
         if isinstance(data.get('error'), dict) and data['error'].get('code') in (403, 429):
             raise SofaScoreConnectionError(data['error'])
