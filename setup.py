@@ -4,7 +4,7 @@ from setuptools import find_packages, setup
 HERE = pathlib.Path(__file__).parent
 
 
-VERSION = '2.1.11'
+VERSION = '2.1.12'
 PACKAGE_NAME = 'lanusstats'
 AUTHOR = 'Federico Rábanos'
 AUTHOR_EMAIL = 'lanusstats@gmail.com'
@@ -16,7 +16,7 @@ LONG_DESCRIPTION = (HERE / "README.md").read_text(encoding='utf-8')
 LONG_DESC_TYPE = "text/markdown"
 
 INSTALL_REQUIRES = [
-      'pandas', 'mplsoccer', 'requests', 'matplotlib', 'numpy', 'bs4', 'Pillow', 'faker', 'nodriver', 'pydoll-python', 'setuptools', 'undetected-chromedriver', 'ipython',
+      'pandas', 'mplsoccer', 'requests', 'matplotlib', 'numpy', 'bs4', 'Pillow', 'curl_cffi>=0.14.0', 'nodriver', 'pydoll-python', 'setuptools', 'undetected-chromedriver', 'ipython',
       ]
 
 setup(
