@@ -1,68 +1,11 @@
-import json
-import re
-import subprocess
-import sys
-import numpy as np
+import time
 from datetime import datetime
 from typing import Optional
-import time
-from .functions import get_possible_leagues_for_page, pd, uc, get_random_rate_sleep
-from .exceptions import InvalidStrType, MatchDoesntHaveInfo, PlayerDoesntHaveInfo
-from faker import Faker
-from faker.providers import user_agent
-from bs4 import BeautifulSoup
+import numpy as np
+from curl_cffi import requests as cffi_requests
+from .functions import get_possible_leagues_for_page, pd, get_random_rate_sleep
+from .exceptions import InvalidStrType, MatchDoesntHaveInfo, PlayerDoesntHaveInfo, SofaScoreConnectionError
 
-
-def _get_chrome_major_version() -> Optional[int]:
-    """Detect the installed Chrome major version to avoid chromedriver mismatch."""
-    cmds = []
-    if sys.platform == "win32":
-        cmds = [
-            ['reg', 'query', r'HKEY_CURRENT_USER\Software\Google\Chrome\BLBeacon', '/v', 'version'],
-            ['reg', 'query', r'HKEY_LOCAL_MACHINE\SOFTWARE\Google\Chrome\BLBeacon', '/v', 'version'],
-        ]
-    elif sys.platform == "darwin":
-        cmds = [['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', '--version']]
-    else:
-        cmds = [
-            ['google-chrome', '--version'],
-            ['google-chrome-stable', '--version'],
-            ['/usr/bin/google-chrome', '--version'],
-            ['/usr/bin/google-chrome-stable', '--version'],
-            ['chromium-browser', '--version'],
-            ['chromium', '--version'],
-        ]
-
-    for cmd in cmds:
-        try:
-            out = subprocess.run(cmd, capture_output=True, text=True, timeout=5).stdout
-            match = re.search(r'(\d+)\.\d+\.\d+', out)
-            if match:
-                return int(match.group(1))
-        except Exception:
-            continue
-    return None
-
-def _get_system_chromedriver_path() -> Optional[str]:
-    """Return the path to a system-installed chromedriver, or None to let uc download its own."""
-    candidates = [
-        '/usr/local/bin/chromedriver',
-        '/usr/bin/chromedriver',
-    ]
-    for path in candidates:
-        try:
-            out = subprocess.run([path, '--version'], capture_output=True, text=True, timeout=5).stdout
-            if 'ChromeDriver' in out:
-                return path
-        except Exception:
-            continue
-    return None
-
-
-fake = Faker()
-fake.add_provider(user_agent)
-
-user_agent_provider = fake.user_agent
 
 class SofaScore:
 
@@ -124,7 +67,7 @@ class SofaScore:
             'rating'
             ]
         self.base_url = 'https://www.sofascore.com/'
-        self._driver = None
+        self._session = None
 
     def __enter__(self) -> 'SofaScore':
         return self
@@ -133,17 +76,13 @@ class SofaScore:
         self.close()
 
     def close(self) -> None:
-        """Close the persistent Chrome session and free resources."""
-        if self._driver is not None:
+        """Close the persistent HTTP session and free resources."""
+        if self._session is not None:
             try:
-                self._driver.quit()
+                self._session.close()
             except Exception:
                 pass
-            try:
-                self._driver.service.process.kill()
-            except Exception:
-                pass
-            self._driver = None
+            self._session = None
 
     def get_match_id(self, match_url: str) -> str:
         """Get match id for any match.
@@ -160,43 +99,34 @@ class SofaScore:
         match_id = match_url.split(':')[-1]
         return match_id
 
-    def _build_driver(self):
-        chrome_options = uc.ChromeOptions()
-        chrome_options.add_argument("--headless=new")
-        chrome_options.add_argument("--no-sandbox")
-        chrome_options.add_argument("--disable-dev-shm-usage")
-        chrome_options.add_argument(f'user-agent={Faker().chrome()}')
-        return uc.Chrome(
-            options=chrome_options,
-            version_main=_get_chrome_major_version(),
-            driver_executable_path=_get_system_chromedriver_path(),
-        )
-
-    def _ensure_driver(self):
-        if self._driver is None:
-            self._driver = self._build_driver()
-        return self._driver
-
-    def _fetch_with_driver(self, driver, path: str) -> dict:
-        url = f"{self.base_url}{path}"
-        driver.get(url)
-        time.sleep(2)
-        soup = BeautifulSoup(driver.page_source, 'html.parser')
-        data = json.loads(soup.text)
-        time.sleep(get_random_rate_sleep(1, 3.5))
-        return data
+    def _ensure_session(self) -> cffi_requests.Session:
+        if self._session is None:
+            self._session = cffi_requests.Session(impersonate='safari184')
+        return self._session
 
     def sofascore_request(self, path: str) -> dict:
-        """Make a request to SofaScore reusing the persistent Chrome session.
+        """Make a request to SofaScore reusing a persistent HTTP session.
 
         Args:
             path: API path relative to the SofaScore base URL.
 
         Returns:
             Parsed JSON response as a dict.
+
+        Raises:
+            SofaScoreConnectionError: SofaScore blocked the request
+                (403/429 bot-detection challenge).
         """
-        driver = self._ensure_driver()
-        return self._fetch_with_driver(driver, path)
+        session = self._ensure_session()
+        url = f'{self.base_url}{path}'
+        response = session.get(url, timeout=20)
+        data = response.json()
+
+        if isinstance(data.get('error'), dict) and data['error'].get('code') in (403, 429):
+            raise SofaScoreConnectionError(data['error'])
+
+        time.sleep(get_random_rate_sleep(0.5, 1.5))
+        return data
 
     def get_match_data(self, match_url: str) -> dict:
         """Get all general data from a match.
