@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.1.13] - 2026-10-03
+
+### Changed
+- Merge pull request #49 from federicorabanos/worktree-feat+sofascore-curl-cffi
+
 ## [2.1.12] - 2026-09-27
 
 ### Changed
