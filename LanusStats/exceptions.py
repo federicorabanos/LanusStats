@@ -46,4 +46,16 @@ class FotMobTimeoutError(Exception):
     """Raised when a single FotMob request exceeds the configured timeout."""
     def __init__(self, url):
         super().__init__(f"Timeout al hacer request a: {url}")
-        
+
+class SofaScoreConnectionError(Exception):
+    """Raised when SofaScore blocks the request (bot-detection challenge)."""
+    def __init__(self, error_payload):
+        super().__init__(
+            f"SofaScore bloqueó la conexión: {error_payload}. "
+            "Puede ser un bloqueo temporal o de reputación de IP (datacenter/cloud); "
+            "probar desde otra red o más tarde.\n"
+            f"SofaScore blocked the request: {error_payload}. "
+            "May be a temporary block or IP reputation issue (datacenter/cloud); "
+            "try from a different network or later."
+        )
+

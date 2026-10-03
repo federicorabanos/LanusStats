@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.1.12] - 2026-09-27
+
+### Changed
+- **SofaScore**: migrado de `undetected_chromedriver` (browser headless) a `curl_cffi` con impersonation de Safari. Reduce el tiempo de un scrape de liga completo de ~275s a ~20s, y elimina la dependencia de tener Chrome instalado y el riesgo de procesos zombie.
+- **SofaScore**: los bloqueos de la API (403/429) ahora levantan `SofaScoreConnectionError` con un mensaje claro, en vez de propagarse como un `KeyError` confuso en el caller.
+
+### Removed
+- `faker` como dependencia de `setup.py` (solo la usaba el método viejo de SofaScore para generar User-Agents falsos).
+
 ## [2.1.11] - 2026-05-22
 
 ### Changed
